@@ -1,5 +1,5 @@
 # IT114-006
 
-## Anthony Aliotta
+## Anthony 
 
 ### I was born and raised in upper New Jersey
