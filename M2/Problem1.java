@@ -16,7 +16,20 @@ public class Problem1 {
         System.out.println("Processing Array:" + Arrays.toString(arr));
         System.out.println("Odds output:");
         //TODO add/edit code here
-        
+        /*********************************************************
+         * afa52
+         * 2/3/2023
+         * The code implemented here is a for-loop that increments  
+         * through each element in the array and checks if the 
+         * division remainder of the current element is equal to 1
+         * If true, the system will output the element in the
+         * current index of the array
+         ********************************************************/
+        for(int i=0; i < arr.length; i++){
+            if(arr[i]%2==1){
+                System.out.println(arr[i] + "");
+            }
+        }
         //end add/edit section
         System.out.println();
         System.out.println("End process");

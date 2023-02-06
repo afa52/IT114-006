@@ -1,5 +1,4 @@
 import java.util.Arrays;
-
 public class Problem2 {
     public static void main(String[] args) {
         //Don't edit anything here
@@ -18,9 +17,22 @@ public class Problem2 {
         double total = 0;
         String totalOutput = "";
         //TODO add/edit code here
-       
+        /*********************************************************
+         * afa52
+         * 2/3/2023
+         * The code implemented here is a for-loop that iterates
+         * through each element in the array and for each iteration
+         * the loop adds the current value of the element to the 
+         * variable total.
+         * Using Java's built in String format method to set the
+         * double to a string variable and format the total to 
+         * 2 decimal places.
+         ********************************************************/
+        for(int i=0; i < arr.length; i++ ){
+            total += arr[i];
+        }
         //set the double to a string variable
-        totalOutput = total+"";
+        totalOutput = String.format("%.2f", total)+"";
         //end add/edit section
         System.out.println("Total is " + totalOutput);
         System.out.println("End process");
