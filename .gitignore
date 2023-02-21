@@ -1,0 +1,7 @@
+config.*
+*.log
+*.conf
+
+*.class
+.DS_Store
+.vscode
