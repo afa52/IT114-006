@@ -5,10 +5,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.List;
 
 public class Server {
     int port = 3001;
+    private int answer;
+    private boolean gameActive;
     // connected clients
     private List<ServerThread> clients = new ArrayList<ServerThread>();
 
@@ -68,6 +71,7 @@ public class Server {
     }
 
     private boolean processCommand(String message, long clientId){
+        processCoinTossCommand(message, clientId);
         System.out.println("Checking command: " + message);
         if(message.equalsIgnoreCase("disconnect")){
             Iterator<ServerThread> it = clients.iterator();
@@ -83,6 +87,21 @@ public class Server {
             return true;
         }
         return false;
+    }
+    private void processCoinTossCommand(String message, long clientID) {
+        if(message.matches("coin|toss|flip")){
+            Random r = new Random();
+            int index = r.nextInt(2);
+            String headTail;
+            if(index == 0) {
+                headTail = "Tails";
+            }
+            else {
+                headTail = "Heads";
+            }
+            String resultMessage = String.format("User[%d] flipped a coin and got %s", clientID, headTail);
+            broadcast(resultMessage, clientID);
+        }
     }
     public static void main(String[] args) {
         System.out.println("Starting Server");
