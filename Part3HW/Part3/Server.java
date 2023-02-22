@@ -10,9 +10,7 @@ import java.util.Random;
 
 public class Server {
     int port = 3001;
-    private boolean isGameActive;
-    private int hiddenNum;
-    private String clientID;
+
     // connected clients
     private List<ServerThread> clients = new ArrayList<ServerThread>();
 
@@ -72,7 +70,6 @@ public class Server {
     }
 
     private boolean processCommand(String message, long clientId){
-        processGuess(message, clientId);
         processCoinTossCommand(message, clientId);
         System.out.println("Checking command: " + message);
         if(message.equalsIgnoreCase("disconnect")){
@@ -113,60 +110,7 @@ public class Server {
             broadcast(resultMessage, clientID);
         }
     }
-    /*
-        Implementation 2
-        afa52
-        IT114-006
-        2-21-23
-
-    */
-    private void startGame(long clientID) {
-        isGameActive = true;
-        hiddenNum = new Random().nextInt(10) + 1;
-        String startMessage = String.format("User %s has started a number guessing game. Guess a number from 1 to 10. ", clientID);
-        broadcast(startMessage, -1);
-    }
-    private void endGame(long clientID) {
-        isGameActive = false;
-        hiddenNum = 0;
-        String endMessage = String.format("The game has ended.", clientID);
-        broadcast(endMessage, -1);
-    }
-    private void processGuess(String message, long clientID){
-            if (!isGameActive){
-            broadcast("There is no game active.", clientID);
-            return;
-        }
-        if (!message.matches("guess \\d+")){
-            handleCommand(message, clientID);
-            broadcast("Invalid command, try 'guess 5'", clientID);
-            return;
-        }
-        int numGuessed = Integer.parseInt(message.split(" ")[1]);
-        if (numGuessed == hiddenNum){
-            String winMessage = String.format("User[%d] guessed %d and it was correct!", clientID);
-            broadcast(winMessage, clientID);
-            endGame(clientID);
-        }
-        else{
-            String loseMessage = String.format("User[%d] guessed %d but that is incorrect.", clientID);
-            broadcast(loseMessage, -1);
-        }
-    }
-        
-    private void handleCommand(String message, long clientID){
-        if(message.matches("start")){
-            startGame(clientID);
-        }
-        if(message.matches("guess")){
-            processGuess(message, clientID);
-        } else {
-            String defaultMessage = String.format("User[%d]: %s", clientID);
-            broadcast(defaultMessage, -1);
-    
-        }
-    }
-
+ 
     public static void main(String[] args) {
         System.out.println("Starting Server");
         Server server = new Server();
