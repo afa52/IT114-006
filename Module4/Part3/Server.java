@@ -10,8 +10,6 @@ import java.util.List;
 
 public class Server {
     int port = 3001;
-    private int answer;
-    private boolean gameActive;
     // connected clients
     private List<ServerThread> clients = new ArrayList<ServerThread>();
 
