@@ -1,3 +1,4 @@
+package Module2;
 import java.util.Arrays;
 public class Problem2 {
     public static void main(String[] args) {
