@@ -54,6 +54,6 @@
 <tr><td><table><tr><td> <em>Sub-Task 1: </em> Add the pull request for this branch</td></tr>
 <tr><td>https://github.com/afa52/IT114-006/pull/8</td></tr>
 <tr><td> <em>Sub-Task 2: </em> Talk about any issues or learnings during this assignment</td></tr>
-<tr><td> <em>Response:</em> <p>The first phase of the milestone was an interesting and complex concept of client-server connection. I learned that in the server class, a socket object is created and binded to a specific port. The, the server listens for incoming clients. In the client class, the client creates a socket and specifies the port number of the server to connect to. The server is able to establish that connection and then create a new socket to communicate with the client. <br></p><br></td></tr>
+<tr><td> <em>Response:</em> <p>The first phase of the milestone was an interesting and complex concept of client-server connection. I learned that in the server class, a socket object is created and binded to a specific port. <br> The, the server listens for incoming clients. In the client class, the client creates a socket and specifies the port number of the server to connect to. <br> The server is able to establish that connection and then create a new socket to communicate with the client. <br></p><br></td></tr>
 </table></td></tr>
 <table><tr><td><em>Grading Link: </em><a rel="noreferrer noopener" href="https://learn.ethereallab.app/homework/IT114-006-S23/it114-milestone1/grade/afa52" target="_blank">Grading</a></td></tr></table>
