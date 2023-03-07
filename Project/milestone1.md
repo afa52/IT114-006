@@ -52,7 +52,7 @@
 </table></td></tr>
 <table><tr><td> <em>Deliverable 4: </em> Misc </td></tr><tr><td><em>Status: </em> <img width="100" height="20" src="https://user-images.githubusercontent.com/54863474/211707834-bf5a5b13-ec36-4597-9741-aa830c195be2.png"></td></tr>
 <tr><td><table><tr><td> <em>Sub-Task 1: </em> Add the pull request for this branch</td></tr>
-<tr><td>Not provided</td></tr>
+<tr><td>https://github.com/afa52/IT114-006/pull/8</td></tr>
 <tr><td> <em>Sub-Task 2: </em> Talk about any issues or learnings during this assignment</td></tr>
 <tr><td> <em>Response:</em> <p>The first phase of the milestone was an interesting and complex concept of<br>sockets and threading. Through various topics like networking, threading, and multithreading.<br></p><br></td></tr>
 </table></td></tr>
