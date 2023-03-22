@@ -1,4 +1,4 @@
-package Project;
+package ChatRoom;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
