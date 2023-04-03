@@ -212,7 +212,6 @@ public enum Server {
             }
         }
     }
-
     private boolean processCommand(String message) {
         System.out.println("Checking command: " + message);
         // TODO

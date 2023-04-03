@@ -17,6 +17,8 @@ public class Room implements AutoCloseable {
     private final static String CREATE_ROOM = "createroom";
     private final static String JOIN_ROOM = "joinroom";
     private final static String DISCONNECT = "disconnect";
+    private final static String FLIP = "flip"; // flip command
+    private final static String ROLL = "roll"; // roll command
     private final static String LOGOUT = "logout";
     private final static String LOGOFF = "logoff";
     private static Logger logger = Logger.getLogger(Room.class.getName());
@@ -105,6 +107,7 @@ public class Room implements AutoCloseable {
                 // change
     private boolean processCommands(String message, ServerThread client) {
         boolean wasCommand = false;
+        String result = null;
         try {
             if (message.startsWith(COMMAND_TRIGGER)) {
                 String[] comm = message.split(COMMAND_TRIGGER);
@@ -121,6 +124,57 @@ public class Room implements AutoCloseable {
                     case JOIN_ROOM:
                         roomName = comm2[1];
                         Room.joinRoom(roomName, client);
+                        break;
+                    /*  afa52                                                                                              04-03-2023
+                    *   case ROLL: waits for /roll command from user. Creates a string array rollArgs that splits the message at any 
+                    *   whitespace characters. The condition statement checks if rollArgs == 2, meaning that the user entered two words, 
+                    *   AND the second word in the array matches the format ("#d#"), then the code block executes. It will first split 
+                    *   the second word of rollArgs at the letter "d", and then assign the variable numDice to the number left of 'd' a
+                    *   "(dice[0])" and assign the variable max to the number right of 'd' as "(dice[1])". An int variable total is also 
+                    *   assigned to 0, and later used in the--
+                    *   for loop that rolls the assigned number of dice with the assigned max value. Finally, the variable result is set
+                    *   to how many dice the user rolled and what the total value was. The else-if code block tests if the user entered
+                    *   two words but without the format. If executed, then it will take the second word of rollArgs[1] and change it to
+                    *   an int value using parseInt and assign to the variable max. Another int variable num is random generated number 
+                    *   between 1 and the user inputted integer. If the user calls the command but does not match the format or does not 
+                    *   input an integer, then the result variable is assigned to an error message. Lastly, the sendMessage() function is
+                    *   called to send the results back to the user. */ 
+                    case ROLL:
+                        String[] rollArgs = message.split("\\s+"); 
+                        if (rollArgs.length == 2 && rollArgs[1].matches("\\d+d\\d+")) {
+                            String[] dice = rollArgs[1].split("d");
+                            int numDice = Integer.parseInt(dice[0]);
+                            int max = Integer.parseInt(dice[1]);
+                            int total = 0;
+                            for (int i = 0; i < numDice; i++) {
+                                total += (int) (Math.random() * max) + 1;
+                            }
+                            result = "You rolled " + numDice + "d" + max + " and got " + total;
+                        } else if (rollArgs.length == 2) {
+                            try {
+                                int max = Integer.parseInt(rollArgs[1]);
+                                int num = (int) (Math.random() * max) + 1;
+                                result = "You got a " + num;
+                            } catch (NumberFormatException e) {
+                                result = "Invalid command format.";
+                            }
+                        } else {
+                            result = "Invalid command format.";
+                        }
+                        sendMessage(client, result);
+                        break;
+                    /*  afa52                                                                                              04-03-2023
+                    *   case FLIP: waits for /flip command from user. The first line stores a random number between 0 and 1 into a 
+                    *   variable called flip. The condition statement checks if flip is less than 0.5, if true the result is "heads" and
+                    *   else the result is "tails". Finally, the sendMessage() function is called to send the results back to the user.*/ 
+                    case FLIP:
+                        double flip = Math.random();
+                        if (flip < 0.5) {
+                            result = "Heads";
+                        } else {
+                            result = "Tails";
+                        }
+                        sendMessage(client, result);
                         break;
                     case DISCONNECT:
                     case LOGOUT:
@@ -226,4 +280,5 @@ public class Room implements AutoCloseable {
         isRunning = false;
         clients.clear();
     }
+
 }

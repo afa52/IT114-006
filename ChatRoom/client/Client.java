@@ -28,6 +28,7 @@ public enum Client {
     private Thread inputThread;
     private Thread fromServerThread;
     private String clientName = "";
+    private String sender = ""; 
     private long myClientId = Constants.DEFAULT_CLIENT_ID;
     private static Logger logger = Logger.getLogger(Client.class.getName());
 
@@ -206,6 +207,7 @@ public enum Client {
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
         p.setClientName(clientName);
+        p.setSender(sender);
         out.writeObject(p);
     }
 
