@@ -162,7 +162,7 @@ public class Room implements AutoCloseable {
                             result = "Invalid command format.";
                         }
                         sendMessage(client, result);
-                        break;
+                        break;              
                     /*  afa52                                                                                              04-03-2023
                     *   case FLIP: waits for /flip command from user. The first line stores a random number between 0 and 1 into a 
                     *   variable called flip. The condition statement checks if flip is less than 0.5, if true the result is "heads" and
@@ -170,13 +170,13 @@ public class Room implements AutoCloseable {
                     case FLIP:
                         double flip = Math.random();
                         if (flip < 0.5) {
-                            result = "Heads";
+                            result = "User flipped a coin and got Heads";
                         } else {
-                            result = "Tails";
+                            result = "User flipped a coin and got Tails";
                         }
                         sendMessage(client, result);
-                        break;
-                    case DISCONNECT:
+                        break;             
+                        case DISCONNECT:
                     case LOGOUT:
                     case LOGOFF:
                         Room.disconnectClient(client, this);
@@ -185,7 +185,7 @@ public class Room implements AutoCloseable {
                         wasCommand = false;
                         break;
                 }
-            }
+            } 
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -235,6 +235,11 @@ public class Room implements AutoCloseable {
      * @param message The message to broadcast inside the room
      */
     protected synchronized void sendMessage(ServerThread sender, String message) {
+
+        //afa52
+        //04-05-2023
+        message = processTextFormatting(message);
+        
         if (!isRunning) {
             return;
         }
@@ -280,5 +285,23 @@ public class Room implements AutoCloseable {
         isRunning = false;
         clients.clear();
     }
-
+    
+    /*  afa52                                                                                              04-03-2023
+    *   processTextFormatting() takes in a String "message" as a parameter and applies effects to text. If the inputted
+    *   string begins with "!b" and ends with "b!", then the text will be bold, if the string begins with "!i" and ends 
+    *   with "i!", then the text will be italics, if the string begins with "!u" and ends with "u!", then the text will 
+    *   be underlined, finally if the inputted string matches "!red/green/blue" and ends with "red/green/blue!" then the
+    *   text will change to the inputted color. The replaceAll() takes two parameters, one that is the occurence of the 
+    *   inputted string, and the second is the desired replacement field. The (.?) is used to match any sequence of 
+    *   characters that occurs between two specific strings.
+    */
+    private String processTextFormatting(String message) {
+        message = message.replaceAll("!b(.*?)b!", "<strong>$1</strong>");
+        message = message.replaceAll("!i(.*?)i!", "<em>$1</em>");
+        message = message.replaceAll("!u(.*?)u!", "<u>$1</u>");
+        message = message.replaceAll("!red(.*?)red!", "<span style=\"color: red;\">$1</span>");
+        message = message.replaceAll("!green(.*?)green!", "<span style=\"color: green;\">$1</span>");
+        message = message.replaceAll("!blue(.*?)blue!", "<span style=\"color: blue;\">$1</span>");
+        return message;
+    }
 }

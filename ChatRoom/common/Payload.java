@@ -2,6 +2,8 @@ package ChatRoom.common;
 
 import java.io.Serializable;
 
+//afa52
+//04-05-2023
 public class Payload implements Serializable {
     // read https://www.baeldung.com/java-serial-version-uid
     private static final long serialVersionUID = 1L;// change this if the class changes
@@ -32,6 +34,12 @@ public class Payload implements Serializable {
         this.clientName = clientName;
     }
 
+    //afa52
+    //04-05-2023
+
+    /**
+     * The unique id of the client
+     */
     private long clientId;
 
     public long getClientId() {
@@ -55,25 +63,9 @@ public class Payload implements Serializable {
         this.message = message;
     }
 
-    /**
-     * Sender of payload 
-     */
-
-    private String sender;
-
-    public String getSender() {
-        return sender;
-    }
-
-    public void setSender(String sender) {
-        this.sender = sender;
-
-    }
-
     @Override
     public String toString() {
-        return String.format("Type[%s],ClientId[%s,] ClientName[%s], Sender[%s], Message[%s]", getPayloadType().toString(),
-                getClientId(), getClientName(),
-                getSender(), getMessage());
+        return String.format("Type[%s], ClientId[%s,] ClientName[%s], Message[%s]", getPayloadType().toString(),
+                getClientId(), getClientName(), getMessage());
     }
 }
