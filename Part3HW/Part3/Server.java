@@ -136,26 +136,6 @@ public class Server {
         }
     }
 
-    /*
-     * Implementation 2
-     * afa52
-     * IT114-006
-     * 2-23-23
-     * The method processCoinTossComannd() is similar to above method where it takes
-     * in the same
-     * parameters and then checks if the message input matches a paticular word. If
-     * true, the method
-     * creates a random object that will provide a random number between 0-1 and
-     * assign that number to
-     * a int variable called 'index'. Using an if condition, if index is equal to 0,
-     * assign "Tails" to
-     * the empty string variable headTail. Else, assign the empty string variable to
-     * "Heads". Finally,
-     * the method will create a string using String.format() that includes clientID
-     * and headTail and
-     * then broadcasts the message to all connected clients.
-     * 
-     */
     private void processCoinTossCommand(String message, long clientID) {
         if (message.matches("coin|toss|flip")) {
             Random r = new Random();
