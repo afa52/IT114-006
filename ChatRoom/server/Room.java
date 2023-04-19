@@ -21,6 +21,8 @@ public class Room implements AutoCloseable {
     private final static String DISCONNECT = "disconnect";
     private final static String LOGOUT = "logout";
     private final static String LOGOFF = "logoff";
+    private final static String ROLL = "roll";
+    private final static String FLIP = "flip";
     private static Logger logger = Logger.getLogger(Room.class.getName());
 
     public Room(String name) {
@@ -116,6 +118,7 @@ public class Room implements AutoCloseable {
                 String command = comm2[0];
                 String roomName;
                 wasCommand = true;
+                String result;
                 switch (command) {
                     case CREATE_ROOM:
                         roomName = comm2[1];
@@ -125,6 +128,40 @@ public class Room implements AutoCloseable {
                         roomName = comm2[1];
                         Room.joinRoom(roomName, client);
                         break;
+                    case ROLL:
+                        String[] rollArgs = message.split("\\s+"); 
+                        if (rollArgs.length == 2 && rollArgs[1].matches("\\d+d\\d+")) {
+                            String[] dice = rollArgs[1].split("d");
+                            int numDice = Integer.parseInt(dice[0]);
+                            int max = Integer.parseInt(dice[1]);
+                            int total = 0;
+                            for (int i = 0; i < numDice; i++) {
+                                total += (int) (Math.random() * max) + 1;
+                            }
+                                result = String.format("%s rolled %dd%d and got %d", 
+                            client.getClientName(), numDice, max, total);
+                        } else if (rollArgs.length == 2) {
+                            try {
+                                int max = Integer.parseInt(rollArgs[1]);
+                                int num = (int) (Math.random() * max) + 1;
+                                result = String.format("%s got %d", client.getClientName(), num);
+                            } catch (NumberFormatException e) {
+                                result = "Invalid command format.";
+                            }
+                        } else {
+                            result = "Invalid command format.";
+                        }
+                        sendMessage(client, result);
+                        break;              
+                    case FLIP:
+                        double flip = Math.random();
+                        if (flip < 0.5) {
+                            result = "<b style=color:red><u>HEADS</u></b>";
+                        } else {
+                            result = "<b style=color:blue><u>TAILS</u></b>";
+                        }
+                        sendMessage(client, result);
+                        break;             
                     case DISCONNECT:
                     case LOGOUT:
                     case LOGOFF:
