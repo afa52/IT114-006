@@ -2,6 +2,7 @@ package ChatRoom.client;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -19,11 +20,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import ChatRoom.client.ChatPanel;
-import ChatRoom.client.ConnectionPanel;
-import ChatRoom.client.Menu;
-import ChatRoom.client.RoomsPanel;
-import ChatRoom.client.UserInputPanel;
+import ChatRoom.client.ui.ChatPanel;
+import ChatRoom.client.ui.ConnectionPanel;
+import ChatRoom.client.ui.Menu;
+import ChatRoom.client.ui.RoomsPanel;
+import ChatRoom.client.ui.UserInputPanel;
 import ChatRoom.common.Constants;
 
 public class ClientUI extends JFrame implements IClientEvents, ICardControls {
@@ -64,7 +65,7 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
             }
         });
 
-        setMinimumSize(new Dimension(800, 600));
+        setMinimumSize(new Dimension(800, 300));
         // centers window
         setLocationRelativeTo(null);
         card = new CardLayout();
@@ -77,9 +78,6 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
         inputPanel = new UserInputPanel(this);
         chatPanel = new ChatPanel(this);
         roomsPanel = new RoomsPanel(this);
-
-        // https://stackoverflow.com/a/9093526
-        // this tells the x button what to do (updated to be controlled via a prompt)
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -156,7 +154,10 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
     }
 
     private String mapClientId(long clientId) {
-        String clientName = userList.get(clientId);
+        String clientName = null;
+        if (userList.containsKey(clientId)) {
+            clientName = userList.get(clientId);
+        }
         if (clientName == null) {
             clientName = "Server";
         }
@@ -176,7 +177,7 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
             if (!userList.containsKey(clientId)) {
                 logger.log(Level.INFO, String.format("Adding %s[%s]", clientName, clientId));
                 userList.put(clientId, clientName);
-                chatPanel.addUserListItem(clientId, String.format("%s (%s)", clientName, clientId));
+                chatPanel.addUserListItem(clientId, clientName);
             }
         } else {
             if (userList.containsKey(clientId)) {
@@ -259,4 +260,5 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
         }
     }
 
+    
 }

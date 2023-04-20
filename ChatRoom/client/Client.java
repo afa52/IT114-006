@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ChatRoom.common.Constants;
@@ -31,7 +30,6 @@ public enum Client {
     private static Logger logger = Logger.getLogger(Client.class.getName());
 
     List<IClientEvents> listeners = new ArrayList<IClientEvents>();
-
 
     public boolean isConnected() {
         if (server == null) {
@@ -81,6 +79,10 @@ public enum Client {
         return isConnected();
     }
 
+    public void removeListener(IClientEvents listener) {
+        listeners.remove(listener);
+    }
+
     public void sendJoinRoom(String roomName) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.JOIN_ROOM);
@@ -107,6 +109,7 @@ public enum Client {
         p.setClientName(clientName);
         out.writeObject(p);
     }
+
     public void sendListRooms(String query) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.GET_ROOMS);
@@ -156,6 +159,7 @@ public enum Client {
         }
         return "unkown user";
     }
+
 
     /**
      * Processes incoming payloads from ServerThread
@@ -277,12 +281,5 @@ public enum Client {
         }
     }
 
-    
-	public static void main(String[] args) {
-		ClientUI ui = new ClientUI("My UI");
-		if (ui != null) {
-			logger.log(Level.FINE, "Started");
-		}
-	}
 
 }

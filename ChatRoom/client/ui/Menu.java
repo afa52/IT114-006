@@ -1,4 +1,4 @@
-package ChatRoom.client;
+package ChatRoom.client.ui;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;

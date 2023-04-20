@@ -1,4 +1,4 @@
-package ChatRoom.client;
+package ChatRoom.client.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

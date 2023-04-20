@@ -3,17 +3,16 @@ package ChatRoom.server;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ChatRoom.common.Constants;
 
 public class Room implements AutoCloseable {
-    // server is a singleton now so we don't need this
-    // protected static Server server;// used to refer to accessible server
-    // functions
     private String name;
     protected List<ServerThread> clients = new ArrayList<ServerThread>();
     private boolean isRunning = false;
+
     // Commands
     private final static String COMMAND_TRIGGER = "/";
     private final static String CREATE_ROOM = "createroom";
@@ -23,11 +22,17 @@ public class Room implements AutoCloseable {
     private final static String LOGOFF = "logoff";
     private final static String ROLL = "roll";
     private final static String FLIP = "flip";
+    private final static String WHISPER = "@";
+
     private static Logger logger = Logger.getLogger(Room.class.getName());
 
     public Room(String name) {
         this.name = name;
         isRunning = true;
+    }
+
+    private void info(String message) {
+        logger.log(Level.INFO, String.format("Room[%s]: ", name, message));
     }
 
     public String getName() {
@@ -50,7 +55,7 @@ public class Room implements AutoCloseable {
             clients.add(client);
             client.sendResetUserList();
             syncCurrentUsers(client);
-            sendConnectionStatus(client, true);
+            sendConnectionStatus(client, true, "joined the room" + getName());
         }
     }
 
@@ -67,7 +72,7 @@ public class Room implements AutoCloseable {
         }
         // if there are still clients tell them this person left
         if (clients.size() > 0) {
-            sendConnectionStatus(client, false);
+            sendConnectionStatus(client, false, "left the room" + getName());
         }
         checkClients();
     }
@@ -99,20 +104,13 @@ public class Room implements AutoCloseable {
         }
     }
 
-    /***
-     * Helper function to process messages to trigger different functionality.
-     * 
-     * @param message The original message being sent
-     * @param client  The sender of the message (since they'll be the ones
-     *                triggering the actions)
-     */
-    @Deprecated // not used in my project as of this lesson, keeping it here in case things
-                // change
     private boolean processCommands(String message, ServerThread client) {
         boolean wasCommand = false;
         try {
             if (message.startsWith(COMMAND_TRIGGER)) {
                 String[] comm = message.split(COMMAND_TRIGGER);
+
+                logger.log(Level.INFO, message);
                 String part1 = comm[1];
                 String[] comm2 = part1.split(" ");
                 String command = comm2[0];
@@ -128,6 +126,13 @@ public class Room implements AutoCloseable {
                         roomName = comm2[1];
                         Room.joinRoom(roomName, client);
                         break;
+                    case WHISPER:
+                        String clientName = comm2[1];
+                        clientName = clientName.trim().toLowerCase();
+                        List<String> clients = new ArrayList<String>();
+                        clients.add(clientName);
+                        //sendPrivateMessage(client, clients, message);
+                        break;
                     case ROLL:
                         String[] rollArgs = message.split("\\s+"); 
                         if (rollArgs.length == 2 && rollArgs[1].matches("\\d+d\\d+")) {
@@ -138,30 +143,28 @@ public class Room implements AutoCloseable {
                             for (int i = 0; i < numDice; i++) {
                                 total += (int) (Math.random() * max) + 1;
                             }
-                                result = String.format("%s rolled %dd%d and got %d", 
-                            client.getClientName(), numDice, max, total);
+                            sendMessage(client, "<b><i><font color=green> rolled " + numDice + "d" + max + " and got " + total + "</font></i></b>");
                         } else if (rollArgs.length == 2) {
                             try {
                                 int max = Integer.parseInt(rollArgs[1]);
                                 int num = (int) (Math.random() * max) + 1;
-                                result = String.format("%s got %d", client.getClientName(), num);
+                            sendMessage(client, "<b><i><font color=purple> rolled a " + num + "</font></i></b>");
                             } catch (NumberFormatException e) {
-                                result = "Invalid command format.";
+                                sendMessage(client, "<i><font color=red> Invalid command format.</font></i>");
                             }
                         } else {
-                            result = "Invalid command format.";
+                            sendMessage(client, "<i><font color=red> Invalid command format.</font></i>");
                         }
-                        sendMessage(client, result);
                         break;              
                     case FLIP:
                         double flip = Math.random();
                         if (flip < 0.5) {
-                            result = "<b style=color:red><u>HEADS</u></b>";
+                            result = "<b style=color:red><i>TAILS</i></b>";
                         } else {
-                            result = "<b style=color:blue><u>TAILS</u></b>";
+                            result = "<b style=color:blue><i>HEADS</i></b>";
                         }
                         sendMessage(client, result);
-                        break;             
+                        break;
                     case DISCONNECT:
                     case LOGOUT:
                     case LOGOFF:
@@ -221,6 +224,8 @@ public class Room implements AutoCloseable {
      * @param message The message to broadcast inside the room
      */
     protected synchronized void sendMessage(ServerThread sender, String message) {
+        logger.log(Level.INFO, getName() + ": Sending message to " + clients.size() + "clients");
+        
         if (!isRunning) {
             return;
         }
@@ -241,8 +246,7 @@ public class Room implements AutoCloseable {
             }
         }
     }
-
-    protected synchronized void sendConnectionStatus(ServerThread sender, boolean isConnected) {
+    protected synchronized void sendConnectionStatus(ServerThread sender, boolean isConnected, String message) {
         Iterator<ServerThread> iter = clients.iterator();
         while (iter.hasNext()) {
             ServerThread receivingClient = iter.next();
@@ -252,9 +256,31 @@ public class Room implements AutoCloseable {
                     isConnected);
             if (!messageSent) {
                 handleDisconnect(iter, receivingClient);
+                logger.info("Removed client" + receivingClient.getClientId() );
             }
         }
     }
+
+    protected void sendPrivateMessage(ServerThread sender, String message, List<String> users) {
+        logger.log(Level.INFO, getName() + ": Sending message to " + users.size() + " clients");
+        if (processCommands(message, sender)) {
+            // it was a command, don't broadcast
+            return;
+        }
+        Iterator<ServerThread> iter = clients.iterator();
+        while (iter.hasNext()) {
+            ServerThread client = iter.next();
+                // send message if sender not muted
+            if(users.contains(client.getClientName().toLowerCase())) {
+                if (!client.isMuted(sender.getClientName())){
+                    boolean messageSent = client.sendMessage(client.getClientId(), message);
+                    if (!messageSent) {
+                        iter.remove();
+                    }
+                }
+            }
+        }
+        }
 
     protected void handleDisconnect(Iterator<ServerThread> iter, ServerThread client) {
         if (iter != null) {
@@ -269,7 +295,7 @@ public class Room implements AutoCloseable {
                 }
             }
         }
-        logger.info(String.format("Removed client %s", client.getClientName()));
+        logger.log(Level.INFO, "Removed client %s", client.getClientName());
         sendMessage(null, client.getClientName() + " disconnected");
         checkClients();
     }
@@ -279,4 +305,5 @@ public class Room implements AutoCloseable {
         isRunning = false;
         clients.clear();
     }
+
 }

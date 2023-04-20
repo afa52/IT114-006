@@ -1,7 +1,8 @@
-package ChatRoom.client;
+package ChatRoom.client.ui;
 
 import java.awt.Adjustable;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.AdjustmentEvent;
@@ -171,6 +172,10 @@ public class ChatPanel extends JPanel {
         });
     }
 
+    public UserListPanel getUserListPanel() {
+        return userListPanel;
+    }
+
     private void doResize() {
         if (!this.isVisible()) {
             return;
@@ -180,20 +185,42 @@ public class ChatPanel extends JPanel {
         int deltaY = Math.abs(frameSize.height - lastSize.height);
         if (deltaX >= 5 || deltaY >= 5) {
             lastSize = frameSize;
+            // see if WEST slot is in use
+            Component c = ((BorderLayout) this.getLayout()).getLayoutComponent(BorderLayout.WEST);
+            float leftPanel = .5f;
+            float centerPanel = .2f;
+            float rightPanel = .3f;
+            int width = (int) Math.max(frameSize.getWidth(), 600);
+            int leftPanelWidth = (int) (width * leftPanel);
+            int centerPanelWidth = (int) (width * centerPanel);
+            int rightPanelWidth = (int) (width * rightPanel);
+            Dimension left = new Dimension(leftPanelWidth, (int) frameSize.getHeight());
+            Dimension center = new Dimension(centerPanelWidth, (int) frameSize.getHeight());
+            Dimension right = new Dimension(rightPanelWidth, (int) frameSize.getHeight());
 
+            if (c != null) {
+                if (c.getWidth() != left.getWidth()) {
+                    c.setMinimumSize(left);
+                    c.setPreferredSize(left);
+                }
+            }
             logger.info("Wrapper size: " + frameSize);
-            int w = Math.max((int) Math.ceil(frameSize.getWidth() * .3f), 30);
+            if (userListPanel.getWidth() != right.getWidth()) {
+                userListPanel.setMinimumSize(right);
+                userListPanel.setPreferredSize(right);
+                userListPanel.resizeUserListItems();
+            }
 
-            userListPanel.setMinimumSize(new Dimension(w, (int) frameSize.getHeight()));
-            userListPanel.setPreferredSize(userListPanel.getMinimumSize());
-            userListPanel.revalidate();
-            userListPanel.repaint();
-            w = Math.max((int) Math.ceil(frameSize.getWidth() * .7f), 100);
-            // preferred size was preventing it from growing with its children
-            // chatArea.setPreferredSize(new Dimension(w, (int) Short.MAX_VALUE));
-            chatArea.setMinimumSize(new Dimension(w, (int) frameSize.getHeight()));
-            userListPanel.resizeUserListItems();
-            resizeMessages();
+            // userListPanel.revalidate();
+            // userListPanel.repaint();
+            int originalWidth = chatArea.getWidth();
+            if (chatArea.getWidth() != center.getWidth()) {
+                chatArea.setMinimumSize(center);
+            }
+            if (Math.abs(originalWidth - chatArea.getWidth()) > 10) {
+                resizeMessages();
+            }
+
             // scroll down on new message
             JScrollBar vertical = ((JScrollPane) chatArea.getParent().getParent()).getVerticalScrollBar();
             vertical.setValue(vertical.getMaximum());
@@ -226,18 +253,25 @@ public class ChatPanel extends JPanel {
     }
 
     public void addText(String text) {
+        addText(text, Color.BLACK);
+    }
+
+    public void addText(String text, Color color) {
         JPanel content = chatArea;
         // add message
-        JEditorPane textContainer = new JEditorPane("text/plain", text);
+        JEditorPane textContainer = new JEditorPane("text/html", text);
 
         // sizes the panel to attempt to take up the width of the container
         // and expand in height based on word wrapping
         textContainer.setLayout(null);
-        textContainer.setPreferredSize(
-                new Dimension(content.getWidth(), ClientUtils.calcHeightForText(this, text, content.getWidth())));
-        textContainer.setMaximumSize(textContainer.getPreferredSize());
+        Dimension newDimension = new Dimension(content.getWidth(),
+                ClientUtils.calcHeightForText(this, text, content.getWidth()));
+        textContainer.setPreferredSize(newDimension);
+        textContainer.setMaximumSize(newDimension);
+        textContainer.setMinimumSize(newDimension);
         textContainer.setEditable(false);
         ClientUtils.clearBackground(textContainer);
+        textContainer.setForeground(color);
         // add to container and tell the layout to revalidate
         content.add(textContainer);
         // scroll down on new message

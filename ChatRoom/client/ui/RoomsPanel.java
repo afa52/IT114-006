@@ -1,4 +1,4 @@
-package ChatRoom.client;
+package ChatRoom.client.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -65,8 +65,7 @@ public class RoomsPanel extends JPanel {
                 } else {
                     message.setText("Can't search with an empty query");
                 }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
+            } catch (Exception e) {
                 e.printStackTrace();
                 message.setText("Error sending request: " + e.getMessage());
             }

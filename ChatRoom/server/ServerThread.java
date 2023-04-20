@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,19 +15,39 @@ import ChatRoom.common.Payload;
 import ChatRoom.common.PayloadType;
 import ChatRoom.common.RoomResultPayload;
 
-/**
- * A server-side representation of a single client
- */
 public class ServerThread extends Thread {
     protected Socket client;
     private String clientName;
     private boolean isRunning = false;
-    private ObjectOutputStream out;// exposed here for send()
-    // private Server server;// ref to our server so we can call methods on it
-    // more easily
+    private ObjectOutputStream out;
     protected Room currentRoom;
     private static Logger logger = Logger.getLogger(ServerThread.class.getName());
     private long myClientId;
+
+    List<String> mutedClients = new ArrayList<String>();
+
+    public List<String> getMutedClients() {
+        return this.mutedClients;
+    }
+
+    public void mute(String name) {
+        name = name.trim().toLowerCase();
+        if (!isMuted(name)) {
+            mutedClients.add(name);
+        }
+    }
+
+    public void unmute(String name) {
+        name = name.trim().toLowerCase();
+        if (isMuted(name)) {
+            mutedClients.remove(name);
+        }
+    }
+
+    public boolean isMuted(String name) {
+        name = name.trim().toLowerCase();
+        return mutedClients.contains(name);
+      } 
 
     public void setClientId(long id) {
         myClientId = id;
