@@ -84,7 +84,6 @@ public enum Client {
     }
 
     // Send methods
-
     public void sendListRooms(String query) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.GET_ROOMS);
@@ -154,6 +153,13 @@ public enum Client {
         };
         fromServerThread.start();// start the thread
     }
+
+    protected String getClientNameById(long clientId) {
+        if (clientId == Constants.DEFAULT_CLIENT_ID) {
+            return "[Server]";
+        }
+        return "unkown user";
+    }
     /**
      * Processes incoming payloads from ServerThread
      * 
@@ -163,6 +169,7 @@ public enum Client {
         try {
         switch (p.getPayloadType()) {
             case CONNECT:
+
                 logger.info(String.format("*%s %s*",
                         p.getClientName(),
                         p.getMessage()));
@@ -188,7 +195,7 @@ public enum Client {
                 break;
             case MESSAGE:
                 System.out.println(Constants.ANSI_CYAN + String.format("%s: %s",
-                        getClientNameId(p.getClientId()),
+                        getClientNameById(p.getClientId()),
                         p.getMessage()) + Constants.ANSI_RESET);
                 listeners.forEach(l -> l.onMessageReceive(
                         p.getClientId(), p.getMessage()));
@@ -233,9 +240,6 @@ public enum Client {
     }
     }
 
-    private Object getClientNameId(long clientId) {
-        return null;
-    }
     private void close() {
         myClientId = Constants.DEFAULT_CLIENT_ID;
         try {

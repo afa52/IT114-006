@@ -1,3 +1,4 @@
+
 package ChatRoom.server;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ public class Room implements AutoCloseable {
 
     // Commands
     private final static String COMMAND_TRIGGER = "/";
+    private final static String WHISPER = "@";
     private final static String CREATE_ROOM = "createroom";
     private final static String JOIN_ROOM = "joinroom";
     private final static String DISCONNECT = "disconnect";
@@ -22,14 +24,17 @@ public class Room implements AutoCloseable {
     private final static String LOGOFF = "logoff";
     private final static String ROLL = "roll";
     private final static String FLIP = "flip";
-    private final static String WHISPER = "@";
+    private final static String MUTE = "mute";
+
 
     private static Logger logger = Logger.getLogger(Room.class.getName());
+    public static Server server;
 
     public Room(String name) {
         this.name = name;
         isRunning = true;
     }
+
 
     public String getName() {
         return name;
@@ -105,8 +110,6 @@ public class Room implements AutoCloseable {
         try {
             if (message.startsWith(COMMAND_TRIGGER)) {
                 String[] comm = message.split(COMMAND_TRIGGER);
-
-                logger.log(Level.INFO, message);
                 String part1 = comm[1];
                 String[] comm2 = part1.split(" ");
                 String command = comm2[0];
@@ -127,7 +130,6 @@ public class Room implements AutoCloseable {
                         clientName = clientName.trim().toLowerCase();
                         List<String> clients = new ArrayList<String>();
                         clients.add(clientName);
-                        //sendPrivateMessage(client, clients, message);
                         break;
                     case ROLL:
                         String[] rollArgs = message.split("\\s+"); 
@@ -161,6 +163,11 @@ public class Room implements AutoCloseable {
                         }
                         sendMessage(client, result);
                         break;
+                    case MUTE: 
+                        String targetUsername = comm2[1];
+                        targetUsername = targetUsername.trim().toLowerCase();
+                        muteUser(targetUsername, client);
+                    break;
                     case DISCONNECT:
                     case LOGOUT:
                     case LOGOFF:
@@ -170,12 +177,54 @@ public class Room implements AutoCloseable {
                         wasCommand = false;
                         break;
                 }
+            } else if (message.startsWith(WHISPER)) {
+                String[] comm = message.split(WHISPER);
+                String part1 = comm[1];
+                String[] comm2 = part1.split(" ");
+                String name = comm2[0];
+                logger.log(Level.INFO, "Whispered username " + name);
+                wasCommand = true;
+                client.sendMessage(client.getClientId(), message);
+                synchronized (clients) {
+                    Iterator<ServerThread> iter = clients.iterator();
+                    while (iter.hasNext()) {
+                        ServerThread target = iter.next();
+                        logger.log(Level.INFO, "Checking username.." + target.getClientName());
+                        if (name.equals(target.getClientName())) {
+                            boolean confirmSend = target.sendMessage(target.getClientId(), message);
+                            if (!confirmSend) {
+                                handleDisconnect(iter, client);
+                            }
+                        }
+                   }
+                }
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         return wasCommand;
     }
+
+    private void muteUser(String username, ServerThread client) {
+        ServerThread target = findClient(username);
+        if (target != null) {
+            //client.muteUser(target);
+            sendMessage(client, "Muted you " + username);
+        } else {
+            sendMessage(client, "User " + username + " not found");
+        }
+    }
+    
+    private ServerThread findClient(String username) {
+        for (ServerThread client : clients) {
+            if (client.getClientName().equalsIgnoreCase(username)) {
+                return client;
+            }
+        }
+        return null;
+    }
+    
 
     // Command helper methods
     protected static void getRooms(String query, ServerThread client) {
@@ -219,22 +268,10 @@ public class Room implements AutoCloseable {
      * @param sender  The client sending the message
      * @param message The message to broadcast inside the room
      */
-    private String processTextFormatting(String message) {
-        message = message.replaceAll("!b(.*?)b!", "<strong>$1</strong>");
-        message = message.replaceAll("!i(.*?)i!", "<em>$1</em>");
-        message = message.replaceAll("!u(.*?)u!", "<u>$1</u>");
-        message = message.replaceAll("!red(.*?)red!", "<span style=\"color: red;\">$1</span>");
-        message = message.replaceAll("!green(.*?)green!", "<span style=\"color: green;\">$1</span>");
-        message = message.replaceAll("!blue(.*?)blue!", "<span style=\"color: blue;\">$1</span>");
-        return message;
-    }
-
     protected synchronized void sendMessage(ServerThread sender, String message) {
 
         message = processTextFormatting(message);
-        
-        logger.log(Level.INFO, getName() + ": Sending message to " + clients.size() + "clients");
-        
+
         if (!isRunning) {
             return;
         }
@@ -269,27 +306,42 @@ public class Room implements AutoCloseable {
             }
         }
     }
-
+/* 
     protected void sendPrivateMessage(ServerThread sender, String message, List<String> users) {
         logger.log(Level.INFO, getName() + ": Sending message to " + users.size() + " clients");
         if (processCommands(message, sender)) {
             // it was a command, don't broadcast
             return;
         }
-        Iterator<ServerThread> iter = clients.iterator();
-        while (iter.hasNext()) {
-            ServerThread client = iter.next();
-                // send message if sender not muted
-            if(users.contains(client.getClientName().toLowerCase())) {
-                if (!client.isMuted(sender.getClientName())){
-                    boolean messageSent = client.sendMessage(client.getClientId(), message);
+    
+        for (String username : users) {
+            ServerThread client = findClient(username);
+            if (client != null) {
+                if (!client.isMuted(sender.getClientName())) {
+                    boolean messageSent = client.sendMessage(sender.getClientId(), message);
                     if (!messageSent) {
-                        iter.remove();
+                        // the message could not be sent, remove the client from the list
+                        clients.remove(client);
                     }
+                } else {
+                    // send the message only to the muted user
+                    sender.sendMessage(sender.getClientId(), "You are muted by " + client.getClientName() + " and your message was not sent");
                 }
-            }
-        }
-        }
+            } else {
+                sender.sendMessage(sender.getClientId(), "User " + username + " not found");
+            } 
+        } 
+    }
+*/
+    private String processTextFormatting(String message) {
+        message = message.replaceAll("!b(.*?)b!", "<strong>$1</strong>");
+        message = message.replaceAll("!i(.*?)i!", "<em>$1</em>");
+        message = message.replaceAll("!u(.*?)u!", "<u>$1</u>");
+        message = message.replaceAll("!red(.*?)red!", "<span style=\"color: red;\">$1</span>");
+        message = message.replaceAll("!green(.*?)green!", "<span style=\"color: green;\">$1</span>");
+        message = message.replaceAll("!blue(.*?)blue!", "<span style=\"color: blue;\">$1</span>");
+        return message;
+    }
 
     protected void handleDisconnect(Iterator<ServerThread> iter, ServerThread client) {
         if (iter != null) {
