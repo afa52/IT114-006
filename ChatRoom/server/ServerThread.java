@@ -24,31 +24,20 @@ public class ServerThread extends Thread {
     private static Logger logger = Logger.getLogger(ServerThread.class.getName());
     private long myClientId;
 
-    List<String> mutedClients = new ArrayList<String>();
+    private List<ServerThread> mutedClients = new ArrayList<>();
 
-    public List<String> getMutedClients() {
-        return this.mutedClients;
-    }
-
-    public void mute(String name) {
-        name = name.trim().toLowerCase();
-        if (!isMuted(name)) {
-            mutedClients.add(name);
+    public boolean isMuted(String clientName) {
+        for (ServerThread thread : mutedClients) {
+            if (thread.getClientName().equals(clientName)) {
+                return true;
+            }
         }
+        return false;
     }
-
-    public void unmute(String name) {
-        name = name.trim().toLowerCase();
-        if (isMuted(name)) {
-            mutedClients.remove(name);
-        }
+    public void muteUser(ServerThread target) {
+        mutedClients.add(target);
     }
-
-    public boolean isMuted(String name) {
-        name = name.trim().toLowerCase();
-        return mutedClients.contains(name);
-      } 
-
+    
     public void setClientId(long id) {
         myClientId = id;
     }
@@ -160,6 +149,12 @@ public class ServerThread extends Thread {
     private boolean send(Payload payload) {
         try {
             logger.log(Level.FINE, "Outgoing payload: " + payload);
+            for (ServerThread mutedClient : mutedClients) {
+                if (mutedClient.getClientId() == payload.getClientId()) {
+                    logger.log(Level.INFO, "Message not sent to muted client: " + payload.getClientId());
+                    return false;
+                }
+            }
             out.writeObject(payload);
             logger.log(Level.INFO, "Sent payload: " + payload);
             return true;
@@ -174,7 +169,7 @@ public class ServerThread extends Thread {
             // uncomment this to inspect the stack trace
             // e.printStackTrace();
             return true;// true since it's likely pending being opened
-        }
+        }   
     }
 
     // end send methods

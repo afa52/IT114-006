@@ -20,4 +20,5 @@ public class User extends JPanel {
 	public String getName() {
 		return name;
 	}
+
 }

@@ -15,7 +15,7 @@ public class UserListItem extends JPanel {
     public UserListItem(String clientName, long clientId) {
         this.clientId = clientId;
         this.clientName = clientName;
-        setBackground(Color.BLUE);
+        setBackground(Color.CYAN);
 
         text.setEditable(false);
         text.setText(getBaseText());
