@@ -14,11 +14,6 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ArrayList;
-
-
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -49,8 +44,6 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
     private UserInputPanel inputPanel;
     private RoomsPanel roomsPanel;
     private ChatPanel chatPanel;
-    List<User> users = new ArrayList<User>();
-
 
     public ClientUI(String title) {
         super(title);// call the parent's constructor
@@ -266,5 +259,6 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
             chatPanel.addText("Joined room " + roomName);
         }
     }
-    	
+
+    
 }
