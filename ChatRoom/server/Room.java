@@ -31,10 +31,6 @@ public class Room implements AutoCloseable {
         isRunning = true;
     }
 
-    private void info(String message) {
-        logger.log(Level.INFO, String.format("Room[%s]: ", name, message));
-    }
-
     public String getName() {
         return name;
     }

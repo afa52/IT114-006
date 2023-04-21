@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import ChatRoom.common.Constants;
@@ -42,7 +43,6 @@ public enum Client {
         return server.isConnected() && !server.isClosed() && !server.isInputShutdown() && !server.isOutputShutdown();
 
     }
-
     public void addListener(IClientEvents listener) {
         if (listener == null) {
             return;
@@ -83,6 +83,15 @@ public enum Client {
         listeners.remove(listener);
     }
 
+    // Send methods
+
+    public void sendListRooms(String query) throws IOException {
+        Payload p = new Payload();
+        p.setPayloadType(PayloadType.GET_ROOMS);
+        p.setMessage(query);
+        out.writeObject(p);
+    }
+
     public void sendJoinRoom(String roomName) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.JOIN_ROOM);
@@ -107,13 +116,6 @@ public enum Client {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.CONNECT);
         p.setClientName(clientName);
-        out.writeObject(p);
-    }
-
-    public void sendListRooms(String query) throws IOException {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.GET_ROOMS);
-        p.setMessage(query);
         out.writeObject(p);
     }
 
@@ -152,15 +154,6 @@ public enum Client {
         };
         fromServerThread.start();// start the thread
     }
-
-    protected String getClientNameById(long clientId) {
-        if (clientId == Constants.DEFAULT_CLIENT_ID) {
-            return "[Server]";
-        }
-        return "unkown user";
-    }
-
-
     /**
      * Processes incoming payloads from ServerThread
      * 
@@ -195,7 +188,7 @@ public enum Client {
                 break;
             case MESSAGE:
                 System.out.println(Constants.ANSI_CYAN + String.format("%s: %s",
-                        getClientNameById(p.getClientId()),
+                        getClientNameId(p.getClientId()),
                         p.getMessage()) + Constants.ANSI_RESET);
                 listeners.forEach(l -> l.onMessageReceive(
                         p.getClientId(), p.getMessage()));
@@ -240,6 +233,9 @@ public enum Client {
     }
     }
 
+    private Object getClientNameId(long clientId) {
+        return null;
+    }
     private void close() {
         myClientId = Constants.DEFAULT_CLIENT_ID;
         try {
@@ -280,6 +276,5 @@ public enum Client {
             System.out.println("Server was never opened so this exception is ok");
         }
     }
-
 
 }
