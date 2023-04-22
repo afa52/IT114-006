@@ -20,7 +20,7 @@ public class UserListItem extends JPanel {
     public UserListItem(String clientName, long clientId) {
         this.clientId = clientId;
         this.clientName = clientName;
-        setBackground(Color.BLUE);
+        setBackground(Color.cyan);
 
 
         text.setEditable(false);

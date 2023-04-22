@@ -25,7 +25,7 @@ public class UserInputPanel extends JPanel {
 
 
     public UserInputPanel(ICardControls controls) {
-        super(new BorderLayout(10, 10));
+        super(new BorderLayout(10, 10)); 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
@@ -54,6 +54,9 @@ public class UserInputPanel extends JPanel {
                 username = userValue.getText();
                 if (username.trim().length() == 0) {
                     userError.setText("Username must be provided");
+                    if(username.contains("/s")) {
+                        userError.setText("Username can not contain a space");
+                    }
                     userError.setVisible(true);
                     isValid = false;
                 }

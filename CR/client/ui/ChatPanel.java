@@ -80,7 +80,7 @@ public class ChatPanel extends JPanel {
 
 
             @Override
-            public void keyPressed(KeyEvent e) {
+            public void keyPressed(KeyEvent e) { //afa 52 4-21-2023
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     button.doClick();
                 }
