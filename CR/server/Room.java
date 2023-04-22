@@ -147,7 +147,7 @@ public class Room implements AutoCloseable {
                         List<String> clients = new ArrayList<String>();
                         clients.add(clientName);
                         break;
-                    case ROLL:
+                    case ROLL: //afa52 4-21-23
                         String[] rollArgs = message.split("\\s+");
                         if (rollArgs.length == 2 && rollArgs[1].matches("\\d+d\\d+")) {
                             String[] dice = rollArgs[1].split("d");
@@ -170,7 +170,7 @@ public class Room implements AutoCloseable {
                             sendMessage(client, "<i><font color=red> Invalid command format.</font></i>");
                         }
                         break;              
-                    case FLIP:
+                    case FLIP: //afa52 4-21-23
                         double flip = Math.random();
                         if (flip < 0.5) {
                             result = "<b style=color:red><i>TAILS</i></b>";
@@ -188,7 +188,7 @@ public class Room implements AutoCloseable {
                         wasCommand = false;
                         break;
                 }
-            } else if (message.startsWith(WHISPER)) {
+            } else if (message.startsWith(WHISPER)) { //afa 52 4-21-23
                 String[] comm = message.split(WHISPER);
                 String part1 = comm[1];
                 String[] comm2 = part1.split(" ");
@@ -279,9 +279,7 @@ public class Room implements AutoCloseable {
             // it was a command, don't broadcast
             return;
         }
-        //is private message
-        //filter message
-        long from = sender == null ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
+        long from = sender == null ? Constants.DEFAULT_CLIENT_ID : sender.getClientId(); //afa52 4-21-23
         Iterator<ServerThread> iter = clients.iterator();
         while (iter.hasNext()) {
             ServerThread client = iter.next();
