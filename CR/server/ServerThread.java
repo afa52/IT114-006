@@ -1,4 +1,5 @@
-package ChatRoom.server;
+package CR.server;
+
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,10 +11,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-import ChatRoom.common.Constants;
-import ChatRoom.common.Payload;
-import ChatRoom.common.PayloadType;
-import ChatRoom.common.RoomResultPayload;
+
+
+import CR.common.Constants;
+import CR.common.Payload;
+import CR.common.PayloadType;
+import CR.common.RoomResultPayload;
+
 
 public class ServerThread extends Thread {
     protected Socket client;
@@ -24,42 +28,40 @@ public class ServerThread extends Thread {
     private static Logger logger = Logger.getLogger(ServerThread.class.getName());
     private long myClientId;
 
-    List<String> mutedClients = new ArrayList<String>();
+
+    public static List<String> mutedClients = new ArrayList<String>();
+
 
     public List<String> getMutedClients() {
-        return this.mutedClients;
+        return mutedClients;
     }
 
-    public void mute(String name) {
-        name = name.trim().toLowerCase();
-        if (!isMuted(name)) {
-            mutedClients.add(name);
-        }
+    public void muteClient(String l) {
+        mutedClients.add(l);
     }
-
-    public void unmute(String name) {
-        name = name.trim().toLowerCase();
-        if (isMuted(name)) {
-            mutedClients.remove(name);
-        }
+    
+    public void unmuteClient(String clientName) {
+        mutedClients.remove(clientName);
     }
-
-    public boolean isMuted(String name) {
-        name = name.trim().toLowerCase();
-        return mutedClients.contains(name);
-      } 
+    
+    public boolean isClientMuted(String clientName) {
+        return mutedClients.contains(clientName);
+    }
 
     public void setClientId(long id) {
         myClientId = id;
     }
 
+
     public long getClientId() {
         return myClientId;
     }
 
+
     public boolean isRunning() {
         return isRunning;
     }
+
 
     public ServerThread(Socket myClient, Room room) {
         logger.info("ServerThread created");
@@ -68,7 +70,9 @@ public class ServerThread extends Thread {
         // this.currentRoom = room;
         setCurrentRoom(room);
 
+
     }
+
 
     protected void setClientName(String name) {
         if (name == null || name.isBlank()) {
@@ -78,13 +82,16 @@ public class ServerThread extends Thread {
         clientName = name;
     }
 
+
     public String getClientName() {
         return clientName;
     }
 
+
     protected synchronized Room getCurrentRoom() {
         return currentRoom;
     }
+
 
     protected synchronized void setCurrentRoom(Room room) {
         if (room != null) {
@@ -95,12 +102,14 @@ public class ServerThread extends Thread {
         }
     }
 
+
     public void disconnect() {
         sendConnectionStatus(myClientId, getClientName(), false);
         logger.info("Thread being disconnected by server");
         isRunning = false;
         cleanup();
     }
+
 
     // send methods
     public boolean sendRoomName(String name) {
@@ -109,6 +118,7 @@ public class ServerThread extends Thread {
         p.setMessage(name);
         return send(p);
     }
+
 
     public boolean sendRoomsList(String[] rooms, String message) {
         RoomResultPayload payload = new RoomResultPayload();
@@ -119,6 +129,7 @@ public class ServerThread extends Thread {
         return send(payload);
     }
 
+
     public boolean sendExistingClient(long clientId, String clientName) {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.SYNC_CLIENT);
@@ -127,11 +138,13 @@ public class ServerThread extends Thread {
         return send(p);
     }
 
+
     public boolean sendResetUserList() {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.RESET_USER_LIST);
         return send(p);
     }
+
 
     public boolean sendClientId(long id) {
         Payload p = new Payload();
@@ -139,6 +152,7 @@ public class ServerThread extends Thread {
         p.setClientId(id);
         return send(p);
     }
+
 
     public boolean sendMessage(long clientId, String message) {
         Payload p = new Payload();
@@ -148,6 +162,7 @@ public class ServerThread extends Thread {
         return send(p);
     }
 
+
     public boolean sendConnectionStatus(long clientId, String who, boolean isConnected) {
         Payload p = new Payload();
         p.setPayloadType(isConnected ? PayloadType.CONNECT : PayloadType.DISCONNECT);
@@ -156,6 +171,7 @@ public class ServerThread extends Thread {
         p.setMessage(String.format("%s the room %s", (isConnected ? "Joined" : "Left"), currentRoom.getName()));
         return send(p);
     }
+
 
     private boolean send(Payload payload) {
         try {
@@ -177,6 +193,7 @@ public class ServerThread extends Thread {
         }
     }
 
+
     // end send methods
     @Override
     public void run() {
@@ -191,8 +208,10 @@ public class ServerThread extends Thread {
                                                                      // likely mean a disconnect)
             ) {
 
+
                 logger.info("Received from client: " + fromClient);
                 processPayload(fromClient);
+
 
             } // close while loop
         } catch (Exception e) {
@@ -207,6 +226,7 @@ public class ServerThread extends Thread {
             cleanup();
         }
     }
+
 
     void processPayload(Payload p) {
         switch (p.getPayloadType()) {
@@ -237,9 +257,12 @@ public class ServerThread extends Thread {
             default:
                 break;
 
+
         }
 
+
     }
+
 
     private void cleanup() {
         logger.info("Thread cleanup() start");

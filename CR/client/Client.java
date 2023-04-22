@@ -1,4 +1,6 @@
-package ChatRoom.client;
+
+package CR.client;
+
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,13 +12,16 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import ChatRoom.common.Constants;
-import ChatRoom.common.Payload;
-import ChatRoom.common.PayloadType;
-import ChatRoom.common.RoomResultPayload;
+
+import CR.common.Constants;
+import CR.common.Payload;
+import CR.common.PayloadType;
+import CR.common.RoomResultPayload;
+
 
 public enum Client {
     INSTANCE;
+
 
     Socket server = null;
     ObjectOutputStream out = null;
@@ -30,7 +35,9 @@ public enum Client {
     private long myClientId = Constants.DEFAULT_CLIENT_ID;
     private static Logger logger = Logger.getLogger(Client.class.getName());
 
+
     List<IClientEvents> listeners = new ArrayList<IClientEvents>();
+
 
     public boolean isConnected() {
         if (server == null) {
@@ -42,6 +49,7 @@ public enum Client {
         // if the server had a problem
         return server.isConnected() && !server.isClosed() && !server.isInputShutdown() && !server.isOutputShutdown();
 
+
     }
     public void addListener(IClientEvents listener) {
         if (listener == null) {
@@ -50,9 +58,10 @@ public enum Client {
         listeners.add(listener);
     }
 
+
     /**
      * Takes an ip address and a port to attempt a socket connection to a server.
-     * 
+     *
      * @param address
      * @param port
      * @param clientName
@@ -79,18 +88,20 @@ public enum Client {
         return isConnected();
     }
 
+
     public void removeListener(IClientEvents listener) {
         listeners.remove(listener);
     }
 
-    // Send methods
 
+    // Send methods
     public void sendListRooms(String query) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.GET_ROOMS);
         p.setMessage(query);
         out.writeObject(p);
     }
+
 
     public void sendJoinRoom(String roomName) throws IOException {
         Payload p = new Payload();
@@ -99,6 +110,7 @@ public enum Client {
         out.writeObject(p);
     }
 
+
     public void sendCreateRoom(String roomName) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.CREATE_ROOM);
@@ -106,11 +118,13 @@ public enum Client {
         out.writeObject(p);
     }
 
+
     protected void sendDisconnect() throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.DISCONNECT);
         out.writeObject(p);
     }
+
 
     protected void sendConnect() throws IOException {
         Payload p = new Payload();
@@ -119,6 +133,7 @@ public enum Client {
         out.writeObject(p);
     }
 
+
     public void sendMessage(String message) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.MESSAGE);
@@ -126,6 +141,7 @@ public enum Client {
         p.setClientName(clientName);
         out.writeObject(p);
     }
+
 
     private void listenForServerPayload() {
         fromServerThread = new Thread() {
@@ -138,8 +154,10 @@ public enum Client {
                     while (isRunning && !server.isClosed() && !server.isInputShutdown()
                             && (fromServer = (Payload) in.readObject()) != null) {
 
+
                         logger.info("Debug Info: " + fromServer);
                         processPayload(fromServer);
+
 
                     }
                     logger.info("listenForServerPayload() loop exited");
@@ -154,15 +172,25 @@ public enum Client {
         };
         fromServerThread.start();// start the thread
     }
+
+
+    protected String getClientNameById(long clientId) {
+        if (clientId == Constants.DEFAULT_CLIENT_ID) {
+            return "[Server]";
+        }
+        return "unkown user";
+    }
     /**
      * Processes incoming payloads from ServerThread
-     * 
+     *
      * @param p
      */
     private void processPayload(Payload p) {
         try {
         switch (p.getPayloadType()) {
             case CONNECT:
+
+
                 logger.info(String.format("*%s %s*",
                         p.getClientName(),
                         p.getMessage()));
@@ -188,7 +216,7 @@ public enum Client {
                 break;
             case MESSAGE:
                 System.out.println(Constants.ANSI_CYAN + String.format("%s: %s",
-                        getClientNameId(p.getClientId()),
+                        getClientNameById(p.getClientId()),
                         p.getMessage()) + Constants.ANSI_RESET);
                 listeners.forEach(l -> l.onMessageReceive(
                         p.getClientId(), p.getMessage()));
@@ -226,6 +254,7 @@ public enum Client {
                         + Constants.ANSI_RESET);
                 break;
 
+
         }
     } catch (Exception e) {
         logger.severe("Payload handling problem");
@@ -233,9 +262,7 @@ public enum Client {
     }
     }
 
-    private Object getClientNameId(long clientId) {
-        return null;
-    }
+
     private void close() {
         myClientId = Constants.DEFAULT_CLIENT_ID;
         try {
@@ -276,5 +303,6 @@ public enum Client {
             System.out.println("Server was never opened so this exception is ok");
         }
     }
+
 
 }

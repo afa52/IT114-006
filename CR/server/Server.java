@@ -1,4 +1,5 @@
-package ChatRoom.server;
+package CR.server;
+
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -10,10 +11,13 @@ import java.util.List;
 import java.util.Queue;
 import java.util.logging.Logger;
 
-import ChatRoom.common.Constants;
+
+import CR.common.Constants;
+
 
 public enum Server {
     INSTANCE;
+
 
     int port = 3000;
     private static Logger logger = Logger.getLogger(Server.class.getName());
@@ -21,9 +25,11 @@ public enum Server {
     private Room lobby = null;// default room
     private long nextClientId = 1;
 
+
     private Queue<ServerThread> incomingClients = new LinkedList<ServerThread>();
     // https://www.geeksforgeeks.org/killing-threads-in-java/
     private volatile boolean isRunning = false;
+
 
     private void start(int port) {
         this.port = port;
@@ -46,6 +52,7 @@ public enum Server {
                     incomingClients.add(sClient);
                     incoming_client = null;
 
+
                 }
             } while ((incoming_client = serverSocket.accept()) != null);
         } catch (IOException e) {
@@ -55,6 +62,7 @@ public enum Server {
             logger.info("Closing Server Socket");
         }
     }
+
 
     void startQueueManager() {
         // Queue manager thread to wait for the ServerThread thread to start
@@ -85,6 +93,7 @@ public enum Server {
         }.start();
     }
 
+
     void handleIncomingClient(ServerThread client) {
         client.setClientId(nextClientId);// server reference
         client.sendClientId(nextClientId);// client reference
@@ -95,9 +104,10 @@ public enum Server {
         joinRoom(Constants.LOBBY, client);
     }
 
+
     /***
      * Helper function to check if room exists by case insensitive name
-     * 
+     *
      * @param roomName The name of the room to look for
      * @return matched Room or null if not found
      */
@@ -110,10 +120,11 @@ public enum Server {
         return null;
     }
 
+
     /***
      * Attempts to join a room by name. Will remove client from old room and add
      * them to the new room.
-     * 
+     *
      * @param roomName The desired room to join
      * @param client   The client moving rooms
      * @return true if reassign worked; false if new room doesn't exist
@@ -133,9 +144,10 @@ public enum Server {
         return false;
     }
 
+
     /***
      * Attempts to create a room with given name if it doesn't exist already.
-     * 
+     *
      * @param roomName The desired room to create
      * @return true if it was created and false if it exists
      */
@@ -154,10 +166,11 @@ public enum Server {
         }
     }
 
+
     /**
      * Returns Rooms with names having a partial match with query.
      * Hard coded to a limit of 10.
-     * 
+     *
      * @param query
      * @return
      */
@@ -165,9 +178,10 @@ public enum Server {
         return getRooms(query, 10);
     }
 
+
     /**
      * Returns Rooms with names having a partial match with query.
-     * 
+     *
      * @param query
      * @param limit The maximum records to return
      * @return
@@ -189,15 +203,17 @@ public enum Server {
         return matchedRooms;
     }
 
+
     protected synchronized void removeRoom(Room r) {
         if (rooms.removeIf(room -> room == r)) {
             logger.info(String.format("Removed empty room %s", r.getName()));
         }
     }
 
+
     /**
      * Send message to all rooms
-     * 
+     *
      * @param message
      */
     protected synchronized void broadcast(String message) {
@@ -214,11 +230,13 @@ public enum Server {
         }
     }
 
+
     private boolean processCommand(String message) {
         System.out.println("Checking command: " + message);
         // TODO
         return false;
     }
+
 
     public static void main(String[] args) {
         Server.logger.info("Starting server");
