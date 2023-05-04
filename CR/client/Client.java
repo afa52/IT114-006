@@ -1,6 +1,4 @@
-
 package CR.client;
-
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -9,35 +7,28 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
-
-import CR.common.Constants;
+import CR.common.ClientPayload;
+import CR.common.MyLogger;
 import CR.common.Payload;
 import CR.common.PayloadType;
 import CR.common.RoomResultPayload;
 
 
+
+//Enum Singleton: https://www.geeksforgeeks.org/advantages-and-disadvantages-of-using-enum-as-singleton-in-java/
 public enum Client {
     INSTANCE;
-
 
     Socket server = null;
     ObjectOutputStream out = null;
     ObjectInputStream in = null;
-    final String ipAddressPattern = "/connect\\s+(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}:\\d{3,5})";
-    final String localhostPattern = "/connect\\s+(localhost:\\d{3,5})";
     boolean isRunning = false;
-    private Thread inputThread;
     private Thread fromServerThread;
     private String clientName = "";
-    private long myClientId = Constants.DEFAULT_CLIENT_ID;
-    private static Logger logger = Logger.getLogger(Client.class.getName());
-
-
-    List<IClientEvents> listeners = new ArrayList<IClientEvents>();
-
+    // private static Logger logger = Logger.getLogger(Client.class.getName());
+    private static MyLogger logger = MyLogger.getLogger(Client.class.getName());
+    private static List<IClientEvents> events = new ArrayList<IClientEvents>();
 
     public boolean isConnected() {
         if (server == null) {
@@ -49,36 +40,31 @@ public enum Client {
         // if the server had a problem
         return server.isConnected() && !server.isClosed() && !server.isInputShutdown() && !server.isOutputShutdown();
 
-
-    }
-    public void addListener(IClientEvents listener) {
-        if (listener == null) {
-            return;
-        }
-        listeners.add(listener);
     }
 
+    public void addCallback(IClientEvents e) {
+        events.add(e);
+    }
 
     /**
      * Takes an ip address and a port to attempt a socket connection to a server.
-     *
+     * 
      * @param address
      * @param port
-     * @param clientName
-     * @param listener
      * @return true if connection was successful
      */
-    boolean connect(String address, int port, String clientName, IClientEvents listener) {
+    public boolean connect(String address, int port, String username, IClientEvents callback) {
+        // TODO validate
+        this.clientName = username;
+        addCallback(callback);
         try {
-            addListener(listener);
-            this.clientName = clientName;
             server = new Socket(address, port);
             // channel to send to server
             out = new ObjectOutputStream(server.getOutputStream());
             // channel to listen to server
             in = new ObjectInputStream(server.getInputStream());
             logger.info("Client connected");
-            listenForServerPayload();
+            listenForServerMessage();
             sendConnect();
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -89,193 +75,143 @@ public enum Client {
     }
 
 
-    public void removeListener(IClientEvents listener) {
-        listeners.remove(listener);
+    public void sendCreateRoom(String room) throws IOException, NullPointerException {
+        Payload p = new Payload();
+        p.setPayloadType(PayloadType.CREATE_ROOM);
+        p.setMessage(room);
+        send(p);
     }
 
+    public void sendJoinRoom(String room) throws IOException, NullPointerException {
+        Payload p = new Payload();
+        p.setPayloadType(PayloadType.JOIN_ROOM);
+        p.setMessage(room);
+        send(p);
+    }
 
-    // Send methods
-    public void sendListRooms(String query) throws IOException {
+    public void sendGetRooms(String query) throws IOException, NullPointerException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.GET_ROOMS);
         p.setMessage(query);
-        out.writeObject(p);
+        send(p);
     }
 
-
-    public void sendJoinRoom(String roomName) throws IOException {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.JOIN_ROOM);
-        p.setMessage(roomName);
-        out.writeObject(p);
-    }
-
-
-    public void sendCreateRoom(String roomName) throws IOException {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.CREATE_ROOM);
-        p.setMessage(roomName);
-        out.writeObject(p);
-    }
-
-
-    protected void sendDisconnect() throws IOException {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.DISCONNECT);
-        out.writeObject(p);
-    }
-
-
-    protected void sendConnect() throws IOException {
+    private void sendConnect() throws IOException, NullPointerException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.CONNECT);
         p.setClientName(clientName);
-        out.writeObject(p);
+        send(p);
     }
 
+    public void sendDisconnect() throws IOException, NullPointerException {
+        Payload p = new Payload();
+        p.setPayloadType(PayloadType.DISCONNECT);
+        send(p);
+    }
 
-    public void sendMessage(String message) throws IOException {
+    public void sendMessage(String message) throws IOException, NullPointerException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
         p.setClientName(clientName);
-        out.writeObject(p);
+        send(p);
     }
 
+    // keep this private as utility methods should be the only Payload creators
+    private synchronized void send(Payload p) throws IOException, NullPointerException {
+        // logger.fine("Sending Payload: " + p);
+        synchronized (out) {
+            out.writeObject(p);// TODO force throw each
+        }
+        // logger.fine("Sent Payload: " + p);
+    }
 
-    private void listenForServerPayload() {
+    // end send methods
+
+    private void listenForServerMessage() {
         fromServerThread = new Thread() {
             @Override
             public void run() {
                 try {
                     Payload fromServer;
-                    isRunning = true;
-                    // while we're connected, listen for objects from server
-                    while (isRunning && !server.isClosed() && !server.isInputShutdown()
+                    logger.info("Listening for server messages");
+                    // while we're connected, listen for strings from server
+                    while (!server.isClosed() && !server.isInputShutdown()
                             && (fromServer = (Payload) in.readObject()) != null) {
 
-
-                        logger.info("Debug Info: " + fromServer);
+                        logger.fine("Debug Info: " + fromServer);
                         processPayload(fromServer);
 
-
                     }
-                    logger.info("listenForServerPayload() loop exited");
+                    logger.info("Loop exited");
                 } catch (Exception e) {
-                    logger.severe("Exception in payload");
                     e.printStackTrace();
+                    if (!server.isClosed()) {
+                        logger.info("Server closed connection");
+                    } else {
+                        logger.info("Connection closed");
+                    }
                 } finally {
-                    logger.info("Stopped listening to server input");
                     close();
+                    logger.info("Stopped listening to server input");
                 }
             }
         };
         fromServerThread.start();// start the thread
     }
 
-
-    protected String getClientNameById(long clientId) {
-        if (clientId == Constants.DEFAULT_CLIENT_ID) {
-            return "[Server]";
-        }
-        return "unkown user";
-    }
-    /**
-     * Processes incoming payloads from ServerThread
-     *
-     * @param p
-     */
     private void processPayload(Payload p) {
-        try {
+        logger.fine("Received Payload: " + p);
+        if (events == null && events.size() == 0) {
+            logger.fine("Events not initialize/set" + p);
+            return;
+        }
+        // TODO handle NPE
+        if (p == null) {
+            logger.severe("Payload is null!");
+            return;
+        }
         switch (p.getPayloadType()) {
             case CONNECT:
-
-
-                logger.info(String.format("*%s %s*",
-                        p.getClientName(),
-                        p.getMessage()));
-                listeners.forEach(l -> l.onClientConnect(
-                        p.getClientId(), p.getClientName(),
-                        String.format("*%s %s*", p.getClientName(), p.getMessage())));
+                ClientPayload cp = (ClientPayload) p;
+                events.forEach(e -> e.onClientConnect(cp.getClientId(), cp.getClientName(), cp.getFormattedName(),
+                        cp.getMessage()));
                 break;
             case DISCONNECT:
-                if (p.getClientId() == myClientId) {
-                    myClientId = Constants.DEFAULT_CLIENT_ID;
-                }
-                logger.info(String.format("*%s %s*",
-                        p.getClientName(),
-                        p.getMessage()));
-                listeners.forEach(l -> l.onClientDisconnect(
-                        p.getClientId(), p.getClientName(), (String.format("*%s %s*",
-                                p.getClientName(),
-                                p.getMessage()))));
-                break;
-            case SYNC_CLIENT:
-                listeners.forEach(l -> l.onSyncClient(
-                        p.getClientId(), p.getClientName()));
+                events.forEach(e -> e.onClientDisconnect(p.getClientId(), p.getClientName(), p.getMessage()));
                 break;
             case MESSAGE:
-                System.out.println(Constants.ANSI_CYAN + String.format("%s: %s",
-                        getClientNameById(p.getClientId()),
-                        p.getMessage()) + Constants.ANSI_RESET);
-                listeners.forEach(l -> l.onMessageReceive(
-                        p.getClientId(), p.getMessage()));
+                events.forEach(e -> e.onMessageReceive(p.getClientId(), p.getMessage()));
                 break;
             case CLIENT_ID:
-                if (myClientId == Constants.DEFAULT_CLIENT_ID) {
-                    myClientId = p.getClientId();
-                } else {
-                    logger.warning("Receiving client id despite already being set");
-                }
-                listeners.forEach(l -> l.onReceiveClientId(
-                        p.getClientId()));
-                break;
-            case JOIN_ROOM:
-                listeners.forEach(l -> l.onRoomJoin(p.getMessage()));
-                break;
-            case GET_ROOMS:
-                RoomResultPayload rp = (RoomResultPayload) p;
-                logger.info("Received Room List:");
-                if (rp.getMessage() != null) {
-                    logger.info(rp.getMessage());
-                } else {
-                    for (int i = 0, l = rp.getRooms().length; i < l; i++) {
-                        logger.info(String.format("%s) %s", (i + 1), rp.getRooms()[i]));
-                    }
-                }
-                listeners.forEach(l -> l.onReceiveRoomList(
-                        rp.getRooms(), p.getMessage()));
+                events.forEach(e -> e.onReceiveClientId(p.getClientId()));
                 break;
             case RESET_USER_LIST:
-                listeners.forEach(l -> l.onResetUserList());
+                events.forEach(e -> e.onResetUserList());
+                break;
+            case SYNC_CLIENT:
+                ClientPayload c = (ClientPayload) p;
+                events.forEach(e -> e.onSyncClient(c.getClientId(), c.getClientName(), c.getFormattedName()));
+                break;
+            case GET_ROOMS:
+                events.forEach(e -> e.onReceiveRoomList(((RoomResultPayload) p).getRooms(), p.getMessage()));
+                break;
+            case JOIN_ROOM:
+                events.forEach(e -> e.onRoomJoin(p.getMessage()));
                 break;
             default:
-                logger.warning(Constants.ANSI_RED + String.format("Unhandled Payload type: %s", p.getPayloadType())
-                        + Constants.ANSI_RESET);
+                logger.warning("Unhandled payload type");
                 break;
 
-
         }
-    } catch (Exception e) {
-        logger.severe("Payload handling problem");
-        e.printStackTrace();
     }
-    }
-
 
     private void close() {
-        myClientId = Constants.DEFAULT_CLIENT_ID;
-        try {
-            inputThread.interrupt();
-        } catch (Exception e) {
-            System.out.println("Error interrupting input");
-            // e.printStackTrace();
-        }
         try {
             fromServerThread.interrupt();
         } catch (Exception e) {
             System.out.println("Error interrupting listener");
-            // e.printStackTrace();
+            e.printStackTrace();
         }
         try {
             System.out.println("Closing output stream");
@@ -283,7 +219,7 @@ public enum Client {
         } catch (NullPointerException ne) {
             System.out.println("Server was never opened so this exception is ok");
         } catch (Exception e) {
-            // e.printStackTrace();
+            e.printStackTrace();
         }
         try {
             System.out.println("Closing input stream");
@@ -291,18 +227,16 @@ public enum Client {
         } catch (NullPointerException ne) {
             System.out.println("Server was never opened so this exception is ok");
         } catch (Exception e) {
-            // e.printStackTrace();
+            e.printStackTrace();
         }
         try {
             System.out.println("Closing connection");
             server.close();
             System.out.println("Closed socket");
         } catch (IOException e) {
-            // e.printStackTrace();
+            e.printStackTrace();
         } catch (NullPointerException ne) {
             System.out.println("Server was never opened so this exception is ok");
         }
     }
-
-
 }

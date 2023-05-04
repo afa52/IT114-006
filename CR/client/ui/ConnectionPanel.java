@@ -1,28 +1,22 @@
 package CR.client.ui;
 
-
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-
 import CR.client.Card;
 import CR.client.ICardControls;
 
-
 import java.awt.BorderLayout;
-
 
 public class ConnectionPanel extends JPanel {
     private String host;
     private int port;
 
-
     public ConnectionPanel(ICardControls controls) {
         super(new BorderLayout(10, 10));
-
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
@@ -50,7 +44,6 @@ public class ConnectionPanel extends JPanel {
                 portError.setVisible(false);
                 // if valid, next card
 
-
             } catch (NumberFormatException e) {
                 portError.setText("Invalid port value, must be a number");
                 portError.setVisible(true);
@@ -72,14 +65,10 @@ public class ConnectionPanel extends JPanel {
         this.setName(Card.CONNECT.name());
         controls.addPanel(Card.CONNECT.name(), this);
     }
-
-
-    public String getHost() {
+    public String getHost(){
         return host;
     }
-
-
-    public int getPort() {
+    public int getPort(){
         return port;
     }
 }

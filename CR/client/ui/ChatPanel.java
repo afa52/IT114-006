@@ -1,9 +1,7 @@
 package CR.client.ui;
 
-
 import java.awt.Adjustable;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.AdjustmentEvent;
@@ -15,9 +13,6 @@ import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -29,20 +24,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
-
 import CR.client.Card;
 import CR.client.Client;
 import CR.client.ClientUtils;
 import CR.client.ICardControls;
-
+import CR.common.MyLogger;
 
 public class ChatPanel extends JPanel {
-    private static Logger logger = Logger.getLogger(ChatPanel.class.getName());
+    private static MyLogger logger = MyLogger.getLogger(ChatPanel.class.getName());
     private JPanel chatArea = null;
     private JPanel wrapper = null;
     private UserListPanel userListPanel;
     private Dimension lastSize = new Dimension();
-
 
     public ChatPanel(ICardControls controls) {
         super(new BorderLayout(10, 10));
@@ -51,7 +44,6 @@ public class ChatPanel extends JPanel {
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-
 
         // wraps a viewport to provide scroll capabilities
         JScrollPane scroll = new JScrollPane(content);
@@ -62,7 +54,6 @@ public class ChatPanel extends JPanel {
         wrapper.add(scroll);
         this.add(wrapper, BorderLayout.CENTER);
 
-
         JPanel input = new JPanel();
         input.setLayout(new BoxLayout(input, BoxLayout.X_AXIS));
         JTextField textValue = new JTextField();
@@ -71,28 +62,22 @@ public class ChatPanel extends JPanel {
         // lets us submit with the enter key instead of just the button click
         textValue.addKeyListener(new KeyListener() {
 
-
             @Override
             public void keyTyped(KeyEvent e) {
 
-
             }
 
-
             @Override
-            public void keyPressed(KeyEvent e) { //afa 52 4-21-2023
+            public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     button.doClick();
                 }
             }
 
-
             @Override
             public void keyReleased(KeyEvent e) {
 
-
             }
-
 
         });
         button.addActionListener((event) -> {
@@ -102,11 +87,9 @@ public class ChatPanel extends JPanel {
                     Client.INSTANCE.sendMessage(text);
                     textValue.setText("");// clear the original text
 
-
                     // debugging
-                    logger.log(Level.INFO, "Content: " + content.getSize());
-                    logger.log(Level.INFO, "Parent: " + this.getSize());
-
+                    logger.fine("Content: " + content.getSize());
+                    logger.fine("Parent: " + this.getSize());
 
                 }
             } catch (NullPointerException e) {
@@ -125,10 +108,11 @@ public class ChatPanel extends JPanel {
         controls.addPanel(Card.CHAT.name(), this);
         chatArea.addContainerListener(new ContainerListener() {
 
-
             @Override
             public void componentAdded(ContainerEvent e) {
                 if (chatArea.isVisible()) {
+                    // scroll down on new message
+
                     chatArea.revalidate();
                     chatArea.repaint();
                     /**
@@ -148,14 +132,11 @@ public class ChatPanel extends JPanel {
                             vertical.removeAdjustmentListener(this);
                         }
 
-
                     };
                     vertical.addAdjustmentListener(scroller);
 
-
                 }
             }
-
 
             @Override
             public void componentRemoved(ContainerEvent e) {
@@ -165,20 +146,16 @@ public class ChatPanel extends JPanel {
                 }
             }
 
-
         });
         wrapper.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
 
-
                 super.componentShown(e);
-                logger.log(Level.INFO, "Component shown");
-
+                logger.info("Component shown");
 
                 doResize();
             }
-
 
             @Override
             public void componentResized(ComponentEvent e) {
@@ -188,19 +165,12 @@ public class ChatPanel extends JPanel {
                 doResize();
             }
 
-
             @Override
             public void componentMoved(ComponentEvent e) {
                 // System.out.println("Moved to " + e.getComponent().getLocation());
             }
         });
     }
-
-
-    public UserListPanel getUserListPanel() {
-        return userListPanel;
-    }
-
 
     private void doResize() {
         if (!this.isVisible()) {
@@ -211,107 +181,73 @@ public class ChatPanel extends JPanel {
         int deltaY = Math.abs(frameSize.height - lastSize.height);
         if (deltaX >= 5 || deltaY >= 5) {
             lastSize = frameSize;
-            // see if WEST slot is in use
-            Component c = ((BorderLayout) this.getLayout()).getLayoutComponent(BorderLayout.WEST);
-            float leftPanel = .5f;
-            float centerPanel = .2f;
-            float rightPanel = .3f;
-            int width = (int) Math.max(frameSize.getWidth(), 600);
-            int leftPanelWidth = (int) (width * leftPanel);
-            int centerPanelWidth = (int) (width * centerPanel);
-            int rightPanelWidth = (int) (width * rightPanel);
-            Dimension left = new Dimension(leftPanelWidth, (int) frameSize.getHeight());
-            Dimension center = new Dimension(centerPanelWidth, (int) frameSize.getHeight());
-            Dimension right = new Dimension(rightPanelWidth, (int) frameSize.getHeight());
 
-
-            if (c != null) {
-                if (c.getWidth() != left.getWidth()) {
-                    c.setMinimumSize(left);
-                    c.setPreferredSize(left);
-                }
-            }
             logger.info("Wrapper size: " + frameSize);
-            if (userListPanel.getWidth() != right.getWidth()) {
-                userListPanel.setMinimumSize(right);
-                userListPanel.setPreferredSize(right);
-                userListPanel.resizeUserListItems();
-            }
-
-
-            // userListPanel.revalidate();
-            // userListPanel.repaint();
-            int originalWidth = chatArea.getWidth();
-            if (chatArea.getWidth() != center.getWidth()) {
-                chatArea.setMinimumSize(center);
-            }
-            if (Math.abs(originalWidth - chatArea.getWidth()) > 10) {
-                resizeMessages();
-            }
-
-
+            int w = Math.min( (int) Math.ceil(frameSize.getWidth() * .3f), 30);
+            
+            userListPanel.setMinimumSize(new Dimension(w, (int) frameSize.getHeight()));
+            userListPanel.revalidate();
+            userListPanel.repaint();
+            w = Math.min((int) Math.ceil(frameSize.getWidth() * .7f), 100);
+            // preferred size was preventing it from growing with its children
+            // chatArea.setPreferredSize(new Dimension(w, (int) Short.MAX_VALUE));
+            chatArea.setMinimumSize(new Dimension(w, (int) frameSize.getHeight()));
+            userListPanel.resizeUserListItems();
+            resizeMessages();
             // scroll down on new message
             JScrollBar vertical = ((JScrollPane) chatArea.getParent().getParent()).getVerticalScrollBar();
             vertical.setValue(vertical.getMaximum());
         }
     }
 
-
     private void resizeMessages() {
         for (Component p : chatArea.getComponents()) {
             if (p.isVisible()) {
-                p.setPreferredSize(
+                p.setMinimumSize(
                         new Dimension(wrapper.getWidth(), ClientUtils.calcHeightForText(this,
                                 ((JEditorPane) p).getText(), wrapper.getWidth())));
-                p.setMaximumSize(p.getPreferredSize());
+                p.setMaximumSize(p.getMinimumSize());
+
             }
         }
         chatArea.revalidate();
         chatArea.repaint();
     }
 
-
-    public void addUserListItem(long clientId, String clientName) {
-        userListPanel.addUserListItem(clientId, clientName);
+    public void addUserListItem(long clientId, String clientName, String formattedName) {
+        userListPanel.addUserListItem(clientId, clientName, formattedName);
+        userListPanel.revalidate();
+        userListPanel.repaint();
     }
-
 
     public void removeUserListItem(long clientId) {
         userListPanel.removeUserListItem(clientId);
     }
 
-
     public void clearUserList() {
         userListPanel.clearUserList();
     }
 
-
     public void addText(String text) {
-        addText(text, Color.BLACK);
-    }
-
-
-    public void addText(String text, Color color) {
         JPanel content = chatArea;
         // add message
         JEditorPane textContainer = new JEditorPane("text/html", text);
 
-
         // sizes the panel to attempt to take up the width of the container
         // and expand in height based on word wrapping
-        textContainer.setLayout(null);
-        Dimension newDimension = new Dimension(content.getWidth(),
-                ClientUtils.calcHeightForText(this, text, content.getWidth()));
-        textContainer.setPreferredSize(newDimension);
-        textContainer.setMaximumSize(newDimension);
-        textContainer.setMinimumSize(newDimension);
+        textContainer.setAlignmentX(JEditorPane.LEFT_ALIGNMENT);
+        //textContainer.setLayout(null);
+        textContainer.setMinimumSize(
+                new Dimension(wrapper.getWidth(), ClientUtils.calcHeightForText(this, text, wrapper.getWidth())));
+        textContainer.setMaximumSize(textContainer.getMinimumSize());
         textContainer.setEditable(false);
         ClientUtils.clearBackground(textContainer);
-        textContainer.setForeground(color);
         // add to container and tell the layout to revalidate
         content.add(textContainer);
-        // scroll down on new message
-        JScrollBar vertical = ((JScrollPane) chatArea.getParent().getParent()).getVerticalScrollBar();
-        vertical.setValue(vertical.getMaximum());
+
+    }
+
+    public void clearChatHistory() {
+        chatArea.removeAll();
     }
 }

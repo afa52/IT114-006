@@ -1,6 +1,5 @@
 package CR.client.ui;
 
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -13,7 +12,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -22,18 +20,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
-
-import CR.client.Card;
 import CR.client.Client;
 import CR.client.ICardControls;
-
+import CR.client.Card;
 
 public class RoomsPanel extends JPanel {
     JPanel container;
     List<RoomListItem> rooms = new ArrayList<RoomListItem>();
     JLabel message;
     private static Logger logger = Logger.getLogger(RoomsPanel.class.getName());
-
 
     public RoomsPanel(ICardControls controls) {
         super(new BorderLayout(10, 10));
@@ -45,14 +40,12 @@ public class RoomsPanel extends JPanel {
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-
         JButton back = new JButton("Go Back");
         back.addActionListener((event) -> {
             controls.previous();
         });
         JPanel search = new JPanel();
         search.setLayout(new BoxLayout(search, BoxLayout.Y_AXIS));
-
 
         search.setAlignmentX(Component.LEFT_ALIGNMENT);
         JPanel searchContent = new JPanel();
@@ -61,18 +54,19 @@ public class RoomsPanel extends JPanel {
         JTextField searchValue = new JTextField();
         JButton searchButton = new JButton("Search");
         message = new JLabel("", 0);
-        JPanel messageContainer = new JPanel();// wrapper to help fix alignment
+        JPanel messageContainer = new JPanel();//wrapper to help fix alignment
         searchButton.addActionListener((event) -> {
             try {
                 String query = searchValue.getText().trim();
                 if (query.length() > 0) {
                     removeAllRooms();
-                    Client.INSTANCE.sendListRooms(query);
+                    Client.INSTANCE.sendGetRooms(query);
                     message.setText("Sent query");
                 } else {
                     message.setText("Can't search with an empty query");
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
                 e.printStackTrace();
                 message.setText("Error sending request: " + e.getMessage());
             }
@@ -125,7 +119,6 @@ public class RoomsPanel extends JPanel {
         this.add(container, BorderLayout.CENTER);
         container.addContainerListener(new ContainerListener() {
 
-
             @Override
             public void componentAdded(ContainerEvent e) {
                 if (container.isVisible()) {
@@ -133,7 +126,6 @@ public class RoomsPanel extends JPanel {
                     repaint();
                 }
             }
-
 
             @Override
             public void componentRemoved(ContainerEvent e) {
@@ -143,31 +135,27 @@ public class RoomsPanel extends JPanel {
                 }
             }
 
-
         });
         this.setName(Card.ROOMS.name());
         controls.addPanel(Card.ROOMS.name(), this);
     }
 
-
     public void setMessage(String message) {
         this.message.setText(message);
     }
-
 
     public void addRoom(String room) {
         if (room != null) {
             System.out.println("Adding: " + room);
             RoomListItem r = new RoomListItem(room, (String roomName) -> handleSelection(roomName));
             Dimension size = new Dimension(this.getSize().width, 40);
-            r.setPreferredSize(size);
+            //r.setPreferredSize(size);
             r.setMaximumSize(size);
             r.setMinimumSize(size);
             container.add(r);
             rooms.add(r);
         }
     }
-
 
     public void removeRoom(String room) {
         Iterator<RoomListItem> iter = rooms.iterator();
@@ -182,7 +170,6 @@ public class RoomsPanel extends JPanel {
         }
     }
 
-
     public void removeAllRooms() {
         System.out.println("Clearing rooms");
         Iterator<RoomListItem> iter = rooms.iterator();
@@ -191,11 +178,9 @@ public class RoomsPanel extends JPanel {
             System.out.println("Removing " + r.getRoomName());
             container.remove(r);
 
-
             iter.remove();
         }
     }
-
 
     public void handleSelection(String room) {
         try {

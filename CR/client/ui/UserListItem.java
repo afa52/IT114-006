@@ -14,7 +14,7 @@ import CR.client.ClientUtils;
 public class UserListItem extends JPanel {
     private long clientId;
     private String clientName;
-    JEditorPane text = new JEditorPane("text/plain", "");
+    JEditorPane text = new JEditorPane("text/html", "");
 
 
     public UserListItem(String clientName, long clientId) {
