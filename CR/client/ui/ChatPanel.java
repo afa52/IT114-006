@@ -12,6 +12,8 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import javax.swing.BorderFactory;
@@ -80,6 +82,15 @@ public class ChatPanel extends JPanel {
             }
 
         });
+        
+        JButton histButton = new JButton("Export Chat"); //afa52
+        histButton.addActionListener((event) -> {
+            exportChatHistory();
+        });
+        input.add(histButton);
+        wrapper.add(input, BorderLayout.SOUTH);
+		this.add(wrapper);
+
         button.addActionListener((event) -> {
             try {
                 String text = textValue.getText().trim();
@@ -246,6 +257,31 @@ public class ChatPanel extends JPanel {
         content.add(textContainer);
 
     }
+
+    void exportChatHistory() { //afa52
+		StringBuilder sb = new StringBuilder();
+		Component[] children = chatArea.getComponents();
+		//iterate over textarea children
+		for (Component c : children) {
+			//cast to jeditorpane
+			JEditorPane mesgs = (JEditorPane) c;
+			if (mesgs != null) {
+				//call getText  & append to file
+				sb.append(mesgs.getText());
+			}
+		}
+		String logs = sb.toString();
+		try {
+            File fi = new File("chat_logs.txt");
+            fi.createNewFile();
+			FileWriter fW = new FileWriter("chat_logs.txt");
+			fW.write(logs);
+			fW.close();
+
+		} catch (IOException ie) {
+			ie.printStackTrace();
+		}
+	}
 
     public void clearChatHistory() {
         chatArea.removeAll();

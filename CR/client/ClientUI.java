@@ -1,6 +1,5 @@
 package CR.client;
 
-import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -66,7 +65,7 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
             }
         });
 
-        setMinimumSize(new Dimension(1024, 762));
+        setMinimumSize(new Dimension(600, 400));
         // centers window
         setLocationRelativeTo(null);
         card = new CardLayout();
@@ -79,13 +78,6 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
         inputPanel = new UserInputPanel(this);
         chatPanel = new ChatPanel(this);
         roomsPanel = new RoomsPanel(this);
-        // gamePanel.setPreferredSize(new Dimension((int)(this.getWidth()*.7),
-        // (int)this.getHeight()));
-        chatPanel.setPreferredSize(new Dimension(800, 600));
-        chatPanel.setMaximumSize(chatPanel.getPreferredSize());
-        chatPanel.setMinimumSize(chatPanel.getPreferredSize());
-
-        container.add(chatPanel, BorderLayout.WEST);
 
         // https://stackoverflow.com/a/9093526
         // this tells the x button what to do (updated to be controlled via a prompt)
@@ -157,8 +149,7 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
         int port = csPanel.getPort();
         setTitle(originalTitle + " - " + username);
         Client.INSTANCE.connect(host, port, username, this);
-        // TODO add connecting screen/
-            show(Card.CHAT.name());
+        // TODO add connecting screen/notice
     }
 
     public static void main(String[] args) {

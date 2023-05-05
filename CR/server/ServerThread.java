@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
 
 import CR.common.ClientPayload;
 import CR.common.Constants;
@@ -28,6 +31,13 @@ public class ServerThread extends Thread {
     // Logger.getLogger(ServerThread.class.getName());
     private static MyLogger logger = MyLogger.getLogger(ServerThread.class.getName());
     private long myId;
+    public static List<String> mutedList = new ArrayList<String>();
+
+
+    public static boolean isMuted(String clientName) {
+    	return mutedList.contains(clientName);
+    }
+
 
     public void setClientId(long id) {
         myId = id;
