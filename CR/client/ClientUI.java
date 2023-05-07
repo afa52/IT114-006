@@ -9,7 +9,11 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -28,6 +32,7 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
     CardLayout card = null;// accessible so we can call next() and previous()
     Container container;// accessible to be passed to card methods
     String originalTitle = null;
+    List<User> users = new ArrayList<User>();
     // private static Logger logger = Logger.getLogger(ClientUI.class.getName());
     private static MyLogger logger = MyLogger.getLogger(ClientUI.class.getName());
     private JPanel currentCardPanel = null;
@@ -265,4 +270,24 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
 
         }
     }
+
+    public void onIsMuted(String clientName, boolean isMuted) {
+		// TODO Auto-generated method stub
+		if (clientName != null && !clientName.isEmpty()) {
+			Iterator<User> iter = users.iterator();
+			while (iter.hasNext()) {
+			    User u = iter.next();
+			    if(u.getName().equalsIgnoreCase(clientName)) {
+			    	if (isMuted) {
+				    	u.setName(clientName, "<s>%s</s>");
+			    		//u.setName(clientName, "<font color=red>%s</font>");
+			 		}
+			 		else {
+			 		    u.setName(clientName, "%s");
+			 		}
+			    	break;
+			    }
+			}
+		}
+	}
 }

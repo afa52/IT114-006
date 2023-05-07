@@ -141,6 +141,7 @@ public enum Server {
             newRoom.addClient(client);
             return true;
         }
+        client.loadMuteList();
         return false;
     }
 

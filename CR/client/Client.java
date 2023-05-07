@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import CR.common.ClientPayload;
@@ -13,8 +14,6 @@ import CR.common.MyLogger;
 import CR.common.Payload;
 import CR.common.PayloadType;
 import CR.common.RoomResultPayload;
-
-
 
 //Enum Singleton: https://www.geeksforgeeks.org/advantages-and-disadvantages-of-using-enum-as-singleton-in-java/
 public enum Client {
@@ -29,6 +28,7 @@ public enum Client {
     // private static Logger logger = Logger.getLogger(Client.class.getName());
     private static MyLogger logger = MyLogger.getLogger(Client.class.getName());
     private static List<IClientEvents> events = new ArrayList<IClientEvents>();
+    private static List<Event> muteEvent = new ArrayList<Event>();// change from event to list<event>
 
     public boolean isConnected() {
         if (server == null) {
@@ -74,7 +74,6 @@ public enum Client {
         return isConnected();
     }
 
-
     public void sendCreateRoom(String room) throws IOException, NullPointerException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.CREATE_ROOM);
@@ -119,11 +118,11 @@ public enum Client {
 
     // keep this private as utility methods should be the only Payload creators
     private synchronized void send(Payload p) throws IOException, NullPointerException {
-        // logger.fine("Sending Payload: " + p);
+        logger.fine("Sending Payload: " + p);
         synchronized (out) {
             out.writeObject(p);// TODO force throw each
         }
-        // logger.fine("Sent Payload: " + p);
+        logger.fine("Sent Payload: " + p);
     }
 
     // end send methods
@@ -199,6 +198,9 @@ public enum Client {
             case JOIN_ROOM:
                 events.forEach(e -> e.onRoomJoin(p.getMessage()));
                 break;
+            case MUTE_LIST:
+                triggerIsMuted(p.getClientName(), p.getFlag());
+                break;
             default:
                 logger.warning("Unhandled payload type");
                 break;
@@ -237,6 +239,17 @@ public enum Client {
             e.printStackTrace();
         } catch (NullPointerException ne) {
             System.out.println("Server was never opened so this exception is ok");
+        }
+    }
+
+    // receives MUTED payload from server and triggers onIsMuted in clientUI class
+    private void triggerIsMuted(String clientName, boolean isMuted) {
+        Iterator<Event> iter = muteEvent.iterator();
+        while (iter.hasNext()) {
+            Event e = iter.next();
+            if (e != null) {
+                e.onIsMuted(clientName, isMuted);
+            }
         }
     }
 }

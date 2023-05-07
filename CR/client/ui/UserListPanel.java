@@ -2,7 +2,7 @@
 package CR.client.ui;
 
 import java.awt.BorderLayout;
-
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ContainerEvent;
@@ -84,7 +84,7 @@ public class UserListPanel extends JPanel {
      * @param clientName - used to calculate proper sizing
      * @param formattedName - used to display the actual value
      */
-    protected void addUserListItem(long clientId, String clientName, String formattedName) {
+    protected void addUserListItem(long clientId, String clientName, String formattedName, boolean isLast) {
         logger.info("Adding user to list: " + clientName);
         JPanel content = userListArea;
         logger.info("Userlist: " + wrapper.getSize());
@@ -105,6 +105,11 @@ public class UserListPanel extends JPanel {
         ClientUtils.clearBackground(textContainer);
         // add to container
         content.add(textContainer);
+    
+        // highlight the last message sent
+        if (isLast) {
+            textContainer.setBackground(Color.yellow);
+        }
     }
 
     protected void removeUserListItem(long clientId) {

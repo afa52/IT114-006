@@ -1,6 +1,5 @@
 package CR.client;
 
-
 public interface IClientEvents {
     /**
      * Triggered when a client connects
@@ -63,9 +62,6 @@ public interface IClientEvents {
      */
     void onRoomJoin(String roomName);
 
-    /**
-     * Receives a player's ready state
-     * 
-     * @param clientId
-     */
+    //void onMuteListReceived(List<Long> mutedClients);
+
 }

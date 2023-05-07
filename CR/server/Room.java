@@ -1,8 +1,5 @@
 package CR.server;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -101,7 +98,6 @@ public class Room implements AutoCloseable {
 				String roomName;
 				wasCommand = true;
 				String result;
-				String clientName;
 				switch (command) {
 					case CREATE_ROOM:
 						roomName = comm2[1];
@@ -145,33 +141,40 @@ public class Room implements AutoCloseable {
 						sendMessage(client, result);
 						break;
 					case MUTE:
-						clientName = comm2[1];
-						ServerThread mutedList;
-						if (!ServerThread.isMuted(clientName)) {
-							for (ServerThread cli : clients) {
-								if (cli.getClientName().equals(clientName)) {
-									ServerThread.mutedList.add(clientName);
-									mutedList = cli;
-									mutedList.sendMessage(client.getClientId(), "muted you");
+						String[] muted = comm2[1].split(", ");
+						List<String> muteList = new ArrayList<String>();
+						// can mute multiple clients separated by comma
+						for (String user : muted) {
+							if (!client.isMuted(user)) {
+								client.mute(user);
+								muteList.add(user);
+								// send notification message to the target client
+								ServerThread targetClient = findClient(user);
+								if (targetClient != null) {
+									targetClient.sendMessage(client.getClientId(),
+											"<i><font color=red>You have been muted by " + client.getClientName()
+													+ "</font></i>");
 								}
 							}
 						}
-						wasCommand = true;
-						saveMuteList(client);
 						break;
 					case UNMUTE:
-						clientName = comm2[1];
-						ServerThread UnMutedPerson;
-						if (ServerThread.isMuted(clientName)) {
-							for (ServerThread cli : clients) {
-								if (cli.getClientName().equals(clientName)) {
-									ServerThread.mutedList.remove(clientName);
-									UnMutedPerson = cli;
-									UnMutedPerson.sendMessage(client.getClientId(), "unmuted you");
+						String[] unmuted = comm2[1].split(", ");
+						List<String> unmuteList = new ArrayList<String>();
+						// can unmute multiple clients separated by comma
+						for (String user : unmuted) {
+							if (client.isMuted(user)) {
+								client.unmute(user);
+								unmuteList.add(user);
+								// send notification message to the target client
+								ServerThread targetClient = findClient(user);
+								if (targetClient != null) {
+									targetClient.sendMessage(client.getClientId(),
+											"<i><font color=green>You have been unmuted by " + client.getClientName()
+													+ "</font></i>");
 								}
 							}
 						}
-						wasCommand = true;
 						break;
 					case DISCONNECT:
 					case LOGOUT:
@@ -212,6 +215,16 @@ public class Room implements AutoCloseable {
 	}
 
 	// Command helper methods
+
+	private ServerThread findClient(String name) {
+		for (ServerThread client : clients) {
+			if (client.getClientName().equalsIgnoreCase(name)) {
+				return client;
+			}
+		}
+		return null;
+	}
+
 	protected static void getRooms(String query, ServerThread client) {
 		String[] rooms = Server.INSTANCE.getRooms(query).toArray(new String[0]);
 		client.sendRoomsList(rooms,
@@ -249,32 +262,16 @@ public class Room implements AutoCloseable {
 		}
 		message = formatMessage(message);
 		long from = (sender == null) ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
-		synchronized (clients) {
-			Iterator<ServerThread> iter = clients.iterator();
-			while (iter.hasNext()) {
-				ServerThread client = iter.next();
-				if (!ServerThread.isMuted(sender.getClientName())) { // Check if the sender is muted by the current client
-					boolean messageSent = client.sendMessage(from, message);
-					if (!messageSent) {
-						handleDisconnect(iter, client);
-					}
+		Iterator<ServerThread> iter = clients.iterator();
+		while (iter.hasNext()) {
+			ServerThread client = iter.next();
+			// send message if sender not muted
+			if (!client.isMuted(sender.getClientName())) {
+				boolean messageSent = client.sendMessage(from, message);
+				if (!messageSent) {
+					iter.remove();
 				}
 			}
-		}
-	}
-
-	public void saveMuteList(ServerThread client) {
-		try {
-			FileWriter wr = new FileWriter("MuteList.txt", false);
-			Iterator<String> mtlst = ServerThread.mutedList.iterator();
-			while (mtlst.hasNext()) {
-				String clientName = mtlst.next();
-				wr.write(clientName + "\n");
-			}
-			wr.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 
@@ -343,6 +340,7 @@ public class Room implements AutoCloseable {
 		// converted to a backwards loop to help avoid concurrent list modification
 		// due to the recursive sendConnectionStatus()
 		// this should only be needed in this particular method due to the recusion
+
 		if (clients == null) {
 			return;
 		}
@@ -369,7 +367,7 @@ public class Room implements AutoCloseable {
 		info("Removed client " + client.getClientName());
 		checkClients();
 		sendConnectionStatus(client, false);
-		// sendMessage(null, client.getClientName() + " disconnected");
+		sendMessage(null, client.getClientName() + " disconnected");
 	}
 
 	public void close() {

@@ -2,6 +2,7 @@ package CR.client.ui;
 
 import java.awt.Adjustable;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.AdjustmentEvent;
@@ -118,37 +119,27 @@ public class ChatPanel extends JPanel {
         this.setName(Card.CHAT.name());
         controls.addPanel(Card.CHAT.name(), this);
         chatArea.addContainerListener(new ContainerListener() {
-
             @Override
             public void componentAdded(ContainerEvent e) {
                 if (chatArea.isVisible()) {
                     // scroll down on new message
-
                     chatArea.revalidate();
                     chatArea.repaint();
-                    /**
-                     * Note: with the setValue(maxValue) it seemed to have a gap.
-                     * The gap would cut off the last message.
-                     * The updated logic below from https://stackoverflow.com/a/34086741
-                     * solves this.
-                     */
+                    
+                    // highlight last message
+                    int numComponents = chatArea.getComponentCount();
+                    if (numComponents > 0) {
+                        Component lastComponent = chatArea.getComponent(numComponents - 1);
+                        lastComponent.setBackground(Color.YELLOW);
+                        lastComponent.setForeground(Color.BLACK);
+                    }
+                    
+                    // scroll to bottom
                     JScrollBar vertical = ((JScrollPane) chatArea.getParent().getParent()).getVerticalScrollBar();
-                    AdjustmentListener scroller = new AdjustmentListener() {
-                        @Override
-                        public void adjustmentValueChanged(AdjustmentEvent e) {
-                            Adjustable adjustable = e.getAdjustable();
-                            adjustable.setValue(vertical.getMaximum());
-                            // We have to remove the listener, otherwise the
-                            // user would be unable to scroll afterwards
-                            vertical.removeAdjustmentListener(this);
-                        }
-
-                    };
-                    vertical.addAdjustmentListener(scroller);
-
+                    vertical.setValue(vertical.getMaximum());
                 }
             }
-
+            
             @Override
             public void componentRemoved(ContainerEvent e) {
                 if (chatArea.isVisible()) {
@@ -156,7 +147,6 @@ public class ChatPanel extends JPanel {
                     chatArea.repaint();
                 }
             }
-
         });
         wrapper.addComponentListener(new ComponentAdapter() {
             @Override
@@ -226,7 +216,7 @@ public class ChatPanel extends JPanel {
     }
 
     public void addUserListItem(long clientId, String clientName, String formattedName) {
-        userListPanel.addUserListItem(clientId, clientName, formattedName);
+        userListPanel.addUserListItem(clientId, clientName, formattedName, true);
         userListPanel.revalidate();
         userListPanel.repaint();
     }
@@ -243,7 +233,6 @@ public class ChatPanel extends JPanel {
         JPanel content = chatArea;
         // add message
         JEditorPane textContainer = new JEditorPane("text/html", text);
-
         // sizes the panel to attempt to take up the width of the container
         // and expand in height based on word wrapping
         textContainer.setAlignmentX(JEditorPane.LEFT_ALIGNMENT);

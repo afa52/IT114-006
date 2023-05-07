@@ -1,12 +1,17 @@
 package CR.server;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
+import java.util.Scanner;
 
 import CR.common.ClientPayload;
 import CR.common.Constants;
@@ -31,13 +36,87 @@ public class ServerThread extends Thread {
     // Logger.getLogger(ServerThread.class.getName());
     private static MyLogger logger = MyLogger.getLogger(ServerThread.class.getName());
     private long myId;
-    public static List<String> mutedList = new ArrayList<String>();
+    List<String> mutedClients = new ArrayList<String>();
 
-
-    public static boolean isMuted(String clientName) {
-    	return mutedList.contains(clientName);
+    public List<String> getMutedClients() {
+        return this.mutedClients;
     }
 
+    public void mute(String name) {
+        System.out.println(String.format("Adding [%s] to your mute list", getId(), name));
+        name = name.trim().toLowerCase();
+        if (!isMuted(name)) {
+            mutedClients.add(name);
+            saveMuteList();
+            syncIsMuted(name, true);
+
+            // Create and send a payload indicating that the client has been muted
+            Payload p = new Payload();
+            p.setPayloadType(PayloadType.MUTE_LIST);
+            p.setClientName(name);
+            p.setFlag(true);
+            send(p);
+        }
+    }
+
+    public void unmute(String name) {
+        name = name.trim().toLowerCase();
+        if (isMuted(name)) {
+            System.out.println("OK..");
+            mutedClients.remove(name);
+            System.out.println("Unmuting client " + name);
+            saveMuteList();
+            syncIsMuted(name, false);
+        }
+    }
+
+    // checks to see if client is muted
+    public boolean isMuted(String name) {
+        name = name.trim().toLowerCase();
+        return mutedClients.contains(name);
+    }
+
+    // overwrites client's mutedClients list to a file
+    void saveMuteList() {
+        String data = clientName + ": " + String.join(", ", mutedClients);
+        try {
+            FileWriter export = new FileWriter(clientName + ".txt");
+            BufferedWriter bw = new BufferedWriter(export);
+            bw.write("" + data); // convert StringBuilder to string
+            bw.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    // loads client's mutedClients list on reconnect
+    void loadMuteList() {
+        File file = new File(clientName + ".txt");
+        if (file.exists()) {
+            try (Scanner reader = new Scanner(file)) {
+                String dataFromFile = "";
+                while (reader.hasNextLine()) {
+                    String text = reader.nextLine();
+                    dataFromFile += text;
+                }
+                dataFromFile = dataFromFile.substring(dataFromFile.indexOf(" ") + 1);
+                ;
+                if (!dataFromFile.strip().equals("") && !dataFromFile.isEmpty()) {
+                    List<String> getClients = Arrays.asList(dataFromFile.split(", "));
+                    for (String client : getClients) {
+                        mute(client);
+                        System.out.println("sync");
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
+        System.out.println(mutedClients.toString());
+    }
 
     public void setClientId(long id) {
         myId = id;
@@ -60,6 +139,7 @@ public class ServerThread extends Thread {
         // get communication channels to single client
         this.client = myClient;
         this.currentRoom = room;
+        this.mutedClients = new ArrayList<String>();
 
     }
 
@@ -212,6 +292,15 @@ public class ServerThread extends Thread {
         }
     }
 
+    // sends client mute or unmute to clientside through payload
+    protected boolean syncIsMuted(String clientName, boolean isMuted) { // afa52
+        Payload p = new Payload();
+        p.setPayloadType(PayloadType.MUTE_LIST);
+        p.setClientName(clientName);
+        p.setFlag(isMuted);
+        return send(p);
+    }
+
     void processPayload(Payload p) {
         switch (p.getPayloadType()) {
             case CONNECT:
@@ -239,6 +328,7 @@ public class ServerThread extends Thread {
                 Room.joinRoom(p.getMessage().trim(), this);
                 break;
             default:
+                logger.warning(String.format("Unrecognized payload type: %s", p.getPayloadType()));
                 break;
 
         }
@@ -254,4 +344,5 @@ public class ServerThread extends Thread {
         }
         info("Thread cleanup() complete");
     }
+
 }

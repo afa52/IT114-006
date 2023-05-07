@@ -26,4 +26,15 @@ public class User extends JPanel {
     public String getName() {
         return name;
     }
+
+    public String getName(String wrapper) {
+    	return String.format(wrapper, name);
+    }
+    
+	public void setName(String name, String wrapper) {
+		//this.name = name;
+		// TODO Auto-generated method stub
+		nameField.setText(String.format(wrapper, name));
+	}
+
 }
