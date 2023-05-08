@@ -1,30 +1,27 @@
 
 package CR.client.ui;
 
-
 import java.awt.BorderLayout;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 
 import javax.swing.BoxLayout;
+import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
-
+import CR.client.ClientUtils;
 import CR.client.ICardControls;
-
+import CR.common.MyLogger;
 
 public class UserListPanel extends JPanel {
     JPanel userListArea;
     JPanel wrapper;
-    private static Logger logger = Logger.getLogger(UserListPanel.class.getName());
-
+    private static MyLogger logger = MyLogger.getLogger(UserListPanel.class.getName());
 
     public UserListPanel(ICardControls controls) {
         super(new BorderLayout(10, 10));
@@ -32,8 +29,7 @@ public class UserListPanel extends JPanel {
         wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.Y_AXIS));
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setAlignmentY(Component.TOP_ALIGNMENT);
-
+        content.setAlignmentY(Component.BOTTOM_ALIGNMENT);
 
         // wraps a viewport to provide scroll capabilities
         JScrollPane scroll = new JScrollPane(content);
@@ -42,24 +38,21 @@ public class UserListPanel extends JPanel {
         // scroll.setBorder(BorderFactory.createEmptyBorder());
         // no need to add content specifically because scroll wraps it
 
-
         userListArea = content;
         this.wrapper = wrapper;
         wrapper.add(scroll);
         this.add(wrapper, BorderLayout.CENTER);
 
-
         userListArea.addContainerListener(new ContainerListener() {
-
 
             @Override
             public void componentAdded(ContainerEvent e) {
                 if (userListArea.isVisible()) {
+                    logger.info("Added visible item");
                     userListArea.revalidate();
                     userListArea.repaint();
                 }
             }
-
 
             @Override
             public void componentRemoved(ContainerEvent e) {
@@ -69,64 +62,61 @@ public class UserListPanel extends JPanel {
                 }
             }
 
-
         });
     }
 
-
-    public void resizeUserListItems() {
+    protected void resizeUserListItems() {
         for (Component p : userListArea.getComponents()) {
             if (p.isVisible()) {
-                /*
-                 * p.setPreferredSize(
-                 * new Dimension(wrapper.getWidth(), ClientUtils.calcHeightForText(this,
-                 * ((JEditorPane) p).getText(), wrapper.getWidth())));
-                 * p.setMaximumSize(p.getPreferredSize());
-                 */
-                // p.setPreferredSize(new Dimension(wrapper.getWidth(), 30));
-                Dimension newSize = new Dimension(wrapper.getWidth(), 30);
-                p.setPreferredSize(newSize);
-                p.setMaximumSize(newSize);
+                //tooltip is storing the original unformated clientName
+                p.setMinimumSize(
+                        new Dimension(wrapper.getWidth(), ClientUtils.calcHeightForText(this,
+                                ((JEditorPane) p).getToolTipText(), wrapper.getWidth())));
+                p.setMaximumSize(p.getMinimumSize());
             }
         }
         userListArea.revalidate();
         userListArea.repaint();
     }
-
-
-    protected void addUserListItem(long clientId, String clientName) {
-        logger.log(Level.INFO, "Adding user to list: " + clientName);
+    /**
+     * Adds user info to the user list panel
+     * @param clientId - unique identifier
+     * @param clientName - used to calculate proper sizing
+     * @param formattedName - used to display the actual value
+     */
+    protected void addUserListItem(long clientId, String clientName, String formattedName) {
+        logger.info("Adding user to list: " + clientName);
         JPanel content = userListArea;
-        logger.log(Level.INFO, "Userlist: " + content.getSize());
-        UserListItem uli = new UserListItem(clientName, clientId);
-        Dimension newSize = new Dimension(wrapper.getWidth(), 30);
-        uli.setPreferredSize(newSize);
-        uli.setMaximumSize(newSize);
-        /*
-         * uli.setBorder(BorderFactory.createCompoundBorder(
-         * BorderFactory.createLineBorder(Color.RED),
-         * uli.getBorder()));
-         */
-        content.add(uli);
-
-
+        logger.info("Userlist: " + wrapper.getSize());
+        JEditorPane textContainer = new JEditorPane("text/html", formattedName);
+        textContainer.setName(clientId + "");
+        textContainer.setToolTipText(clientName);//store original unformatted clientNAme
+        // sizes the panel to attempt to take up the width of the container
+        // and expand in height based on word wrapping
+        textContainer.setAlignmentX(JEditorPane.LEFT_ALIGNMENT);
+        //textContainer.setLayout(null);
+        textContainer.setMinimumSize(
+                new Dimension(wrapper.getWidth(), ClientUtils.calcHeightForText(this, clientName, wrapper.getWidth())));
+        textContainer.setMaximumSize(textContainer.getMinimumSize());
+        logger.info("User List Item: " + textContainer.getMinimumSize());
+        textContainer.setEditable(false);
+        // remove background and border (comment these out to see what it looks like
+        // otherwise)
+        ClientUtils.clearBackground(textContainer);
+        // add to container
+        content.add(textContainer);
     }
 
-
     protected void removeUserListItem(long clientId) {
-        logger.log(Level.INFO, "removing user list item for id " + clientId);
+        logger.info("removing user list item for id " + clientId);
         Component[] cs = userListArea.getComponents();
         for (Component c : cs) {
-            if (c instanceof UserListItem) {
-                UserListItem u = (UserListItem) c;
-                if (u.getClientId() == clientId) {
-                    userListArea.remove(c);
-                    break;
-                }
+            if (c.getName().equals(clientId + "")) {
+                userListArea.remove(c);
+                break;
             }
         }
     }
-
 
     protected void clearUserList() {
         Component[] cs = userListArea.getComponents();

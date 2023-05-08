@@ -1,11 +1,9 @@
 package CR.client.ui;
 
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -14,21 +12,16 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-
-import CR.client.Card;
 import CR.client.ICardControls;
+import CR.client.Card;
 
-
-public class UserInputPanel extends JPanel {
-    private static Logger logger = Logger.getLogger(UserInputPanel.class.getName());
+public class UserInputPanel extends JPanel{
+    private static Logger logger = Logger.getLogger(UserInputPanel.class.getName()); 
     private String username;
-
-
     public UserInputPanel(ICardControls controls) {
-        super(new BorderLayout(10, 10)); 
+        super(new BorderLayout(10, 10));
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-
 
         JLabel userLabel = new JLabel("Username: ");
         JTextField userValue = new JTextField();
@@ -38,7 +31,6 @@ public class UserInputPanel extends JPanel {
         content.add(userError);
         content.add(Box.createRigidArea(new Dimension(0, 200)));
 
-
         JButton pButton = new JButton("Previous");
         pButton.addActionListener((event) -> {
             controls.previous();
@@ -46,17 +38,12 @@ public class UserInputPanel extends JPanel {
         JButton nButton = new JButton("Connect");
         nButton.addActionListener((event) -> {
 
-
             boolean isValid = true;
-
 
             try {
                 username = userValue.getText();
                 if (username.trim().length() == 0) {
                     userError.setText("Username must be provided");
-                    if(username.contains("/s")) {
-                        userError.setText("Username can not contain a space");
-                    }
                     userError.setVisible(true);
                     isValid = false;
                 }
@@ -77,7 +64,6 @@ public class UserInputPanel extends JPanel {
         buttons.add(pButton);
         buttons.add(nButton);
 
-
         content.add(buttons);
         this.add(new JPanel(), BorderLayout.WEST);
         this.add(new JPanel(), BorderLayout.EAST);
@@ -87,9 +73,7 @@ public class UserInputPanel extends JPanel {
         this.setName(Card.USER_INFO.name());
         controls.addPanel(Card.USER_INFO.name(), this);
     }
-
-
-    public String getUsername() {
+    public String getUsername(){
         return username;
     }
 }

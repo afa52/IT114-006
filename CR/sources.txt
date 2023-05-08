@@ -14,7 +14,10 @@
 ./client/ui/UserListItem.java
 ./client/ui/UserListPanel.java
 ./client/User.java
+./common/ClientPayload.java
 ./common/Constants.java
+./common/GeneralUtils.java
+./common/MyLogger.java
 ./common/Payload.java
 ./common/PayloadType.java
 ./common/RoomResultPayload.java

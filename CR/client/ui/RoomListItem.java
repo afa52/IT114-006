@@ -1,23 +1,19 @@
 package CR.client.ui;
 
-
 import java.util.function.Consumer;
-
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-
 public class RoomListItem extends JPanel {
     private JTextField roomName;
     private JButton joinButton;
 
-
     /**
      * We pass the room name, and a callback for when the room is selected
-     *
+     * 
      * @param room   - Name of room to show on the UI
      * @param onJoin - Callback to trigger when button is clicked
      */
@@ -35,7 +31,6 @@ public class RoomListItem extends JPanel {
         this.add(roomName);
         this.add(joinButton);
     }
-
 
     public String getRoomName() {
         return roomName.getText();
