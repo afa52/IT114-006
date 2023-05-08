@@ -73,7 +73,7 @@ public class ServerThread extends Thread {
         try {
             FileWriter export = new FileWriter(clientName + ".txt");
             BufferedWriter bw = new BufferedWriter(export);
-            bw.write("" + data); // convert StringBuilder to string
+            bw.write("" + data);
             bw.close();
         } catch (IOException e) {
             e.printStackTrace();

@@ -372,5 +372,17 @@ public class Room implements AutoCloseable {
 		isRunning = false;
 		clients = null;
 	}
+	
+	/*
+	 *     private String processTextFormatting(String message) {
+        message = message.replaceAll("!b(.*?)b!", "<strong>$1</strong>");
+        message = message.replaceAll("!i(.*?)i!", "<em>$1</em>");
+        message = message.replaceAll("!u(.*?)u!", "<u>$1</u>");
+        message = message.replaceAll("!red(.*?)red!", "<span style=\"color: red;\">$1</span>");
+        message = message.replaceAll("!green(.*?)green!", "<span style=\"color: green;\">$1</span>");
+        message = message.replaceAll("!blue(.*?)blue!", "<span style=\"color: blue;\">$1</span>");
+        return message;
+    }
 
+	 */
 }
