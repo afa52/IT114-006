@@ -36,48 +36,39 @@ public class ServerThread extends Thread {
     // Logger.getLogger(ServerThread.class.getName());
     private static MyLogger logger = MyLogger.getLogger(ServerThread.class.getName());
     private long myId;
-    List<String> mutedClients = new ArrayList<String>();
+    List<String> mutedClients = new ArrayList<String>(); // afa52 05-05-2023
 
-    public List<String> getMutedClients() {
+    public List<String> getMutedClients() { // afa 05-05-2023
         return this.mutedClients;
     }
 
-    public void mute(String name) {
-        System.out.println(String.format("Adding [%s] to your mute list", getId(), name));
+    public void mute(String name) { // afa52 05-05-2023
+        System.out.println(String.format("Adding [%s] to your mute list", name));
         name = name.trim().toLowerCase();
         if (!isMuted(name)) {
             mutedClients.add(name);
             saveMuteList();
-            syncIsMuted(name, true);
-
-            // Create and send a payload indicating that the client has been muted
-            Payload p = new Payload();
-            p.setPayloadType(PayloadType.MUTE_LIST);
-            p.setClientName(name);
-            p.setFlag(true);
-            send(p);
+            sendMuteList();
         }
     }
 
-    public void unmute(String name) {
+    public void unmute(String name) { // afa52 05-05-2023
         name = name.trim().toLowerCase();
         if (isMuted(name)) {
             System.out.println("OK..");
             mutedClients.remove(name);
             System.out.println("Unmuting client " + name);
             saveMuteList();
-            syncIsMuted(name, false);
+            sendMuteList();
         }
     }
 
-    // checks to see if client is muted
-    public boolean isMuted(String name) {
+    public boolean isMuted(String name) { // afa52 05-05-2023
         name = name.trim().toLowerCase();
         return mutedClients.contains(name);
     }
 
-    // overwrites client's mutedClients list to a file
-    void saveMuteList() {
+    void saveMuteList() { // afa52 05-05-2023
         String data = clientName + ": " + String.join(", ", mutedClients);
         try {
             FileWriter export = new FileWriter(clientName + ".txt");
@@ -85,13 +76,11 @@ public class ServerThread extends Thread {
             bw.write("" + data); // convert StringBuilder to string
             bw.close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
-    // loads client's mutedClients list on reconnect
-    void loadMuteList() {
+    void loadMuteList() { // afa52 05-05-2023
         File file = new File(clientName + ".txt");
         if (file.exists()) {
             try (Scanner reader = new Scanner(file)) {
@@ -101,7 +90,6 @@ public class ServerThread extends Thread {
                     dataFromFile += text;
                 }
                 dataFromFile = dataFromFile.substring(dataFromFile.indexOf(" ") + 1);
-                ;
                 if (!dataFromFile.strip().equals("") && !dataFromFile.isEmpty()) {
                     List<String> getClients = Arrays.asList(dataFromFile.split(", "));
                     for (String client : getClients) {
@@ -139,7 +127,8 @@ public class ServerThread extends Thread {
         // get communication channels to single client
         this.client = myClient;
         this.currentRoom = room;
-        this.mutedClients = new ArrayList<String>();
+        this.mutedClients = new ArrayList<String>(); // afa52
+        loadMuteList();
 
     }
 
@@ -180,6 +169,13 @@ public class ServerThread extends Thread {
         info("Thread being disconnected by server");
         isRunning = false;
         cleanup();
+    }
+
+    public void sendMuteList() {
+        Payload p = new Payload();
+        p.setPayloadType(PayloadType.MUTE_LIST);
+        p.setMessage(String.join(",", mutedClients));
+        send(p);
     }
 
     public boolean sendRoomName(String name) {
@@ -290,6 +286,7 @@ public class ServerThread extends Thread {
             info("Exited thread loop. Cleaning up connection");
             cleanup();
         }
+        loadMuteList();
     }
 
     // sends client mute or unmute to clientside through payload

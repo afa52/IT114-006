@@ -140,15 +140,13 @@ public class Room implements AutoCloseable {
 						}
 						sendMessage(client, result);
 						break;
-					case MUTE:
+					case MUTE: // afa52 05-05-2023
 						String[] muted = comm2[1].split(", ");
 						List<String> muteList = new ArrayList<String>();
-						// can mute multiple clients separated by comma
 						for (String user : muted) {
 							if (!client.isMuted(user)) {
 								client.mute(user);
 								muteList.add(user);
-								// send notification message to the target client
 								ServerThread targetClient = findClient(user);
 								if (targetClient != null) {
 									targetClient.sendMessage(client.getClientId(),
@@ -158,15 +156,13 @@ public class Room implements AutoCloseable {
 							}
 						}
 						break;
-					case UNMUTE:
+					case UNMUTE: // afa52 05-05-2023
 						String[] unmuted = comm2[1].split(", ");
 						List<String> unmuteList = new ArrayList<String>();
-						// can unmute multiple clients separated by comma
 						for (String user : unmuted) {
 							if (client.isMuted(user)) {
 								client.unmute(user);
 								unmuteList.add(user);
-								// send notification message to the target client
 								ServerThread targetClient = findClient(user);
 								if (targetClient != null) {
 									targetClient.sendMessage(client.getClientId(),

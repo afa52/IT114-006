@@ -36,5 +36,6 @@ public class User extends JPanel {
 		// TODO Auto-generated method stub
 		nameField.setText(String.format(wrapper, name));
 	}
+    
 
 }
